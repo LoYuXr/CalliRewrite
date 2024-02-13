@@ -58,18 +58,21 @@ Due to package version dependencies, we need to set up two separate environments
    conda env create -f environment.yml
    ```
 
-6. Activate the second newly created environment (optional):
+6. Activate the second newly created environment:
    ```bash
    conda activate callli_rl
    ```
+
+7. Follow **modify_env.md** and correct some flaws in the packages (Necessary!):
+   
 By following these steps, you will have two separate conda environments configured for coarse sequence extraction and sequence fine-tuning, ensuring that the correct dependencies are installed for each task.
 
 
 ### 1. Caliberate your own writing utensil
 
-We provide three simple tools for modeling in the reinforcement learning environment: **Calligraphy brush**, **fude pen**, and **flat tip marker**. The first two are soft body with 2 degrees of freedom (DoF). The dynamics or kinematic model of tool motion (angle changing with movement direction) is provided by a simple simulation program. The latter is a rigid tool with 3 DoF and the dynamics is controlled by the wrist (servo motor). If you are going to customize the writing tool (strongly recommended if you want to conduct robotic demonstration), you need to customize the geometric properties (the ranges of $r$ , $l$ , and $\theta$ ) and dynamics (how $\theta$ change with motion), referring to implementations in `Finetune/tools/tool_config.yaml` and `Finetune/tools/tool_class.py`.
+We provide three simple tools for modeling in the reinforcement learning environment: **Calligraphy brush**, **fude pen**, and **flat tip marker**. The geometry and dynamic properties are defined in './rl_finetune/Callienv/envs/tools.py' and folder './rl_finetune/tool_property/'. For robotic demonstration please callibrate the properties to bridge the sim-to-real gap. You can also define your own utensil easily.
 
-For calibrating the geometric properties $r$ and $l$ of the tool, we provide a control script using the Dobot Magician robotic arm to write with a brush as an example. It allows the robotic arm to draw lines on paper at different z-axis heights, and by measuring the thickness of the strokes, one can fit the relationship with z.
+For calibrating the geometric properties, we provide a control script using the Dobot Magician robotic arm to write with a brush as an example. It allows the robotic arm to draw lines on paper at different z-axis heights, and by measuring the thickness of the strokes, one can fit the relationship with z.
 
 ### 2. Download pretrained models
 
