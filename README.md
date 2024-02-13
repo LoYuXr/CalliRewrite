@@ -14,8 +14,9 @@
 
 This is the repository of [**CalliRewrite: Recovering Handwriting Behaviors from Calligraphy Images without Supervision**](TODO-PAPER-ARXIV-LINK).
 
-CalliRewrite is an unsupervised approach for low-cost robotic arms to replicate diverse calligraphic
-glyphs on manipulating different writing tools. 我们使用微调后的无监督LSTM来进行笔画拆分；并使用强化学习方法控制书写工具模型在simulator中微调笔画的精细控制。
+CalliRewrite is an unsupervised approach enabling low-cost robotic arms to replicate diverse calligraphic 
+glyphs by manipulating different writing tools. We use fine-tuned unsupervised LSTM to perform coarse stroke segmentation, and refine them through a reinforcement learning method to produce 
+fine-grained control.
 
 For more information, please visit our [**project page**](TODO-PROJECT-PAGE).
 
@@ -30,6 +31,39 @@ For more information, please visit our [**project page**](TODO-PROJECT-PAGE).
 We release our network and checkpoints. You can setup the pipeline under the following guidance.
 
 ### 0. Install dependencies
+Due to package version dependencies, we need to set up two separate environments for coarse sequence extraction and tool-aware finetuning. To do this, you can follow these steps:
+
+1. Navigate to the directory for coarse sequence extraction:
+   ```bash
+   cd seq_extract
+   ```
+
+2. Create a new conda environment using the specified requirements file:
+   ```bash
+   conda env create -f environment.yml
+   ```
+
+3. Activate the newly created environment (optional):
+   ```bash
+   conda activate calli_ext
+   ```
+   
+4. Navigate to the directory for sequence fine-tuning:
+   ```bash
+   cd ../rl_finetune
+   ```
+
+5. Create another new conda environment using the requirements file for fine-tuning:
+   ```bash
+   conda env create -f environment.yml
+   ```
+
+6. Activate the second newly created environment (optional):
+   ```bash
+   conda activate callli_rl
+   ```
+By following these steps, you will have two separate conda environments configured for coarse sequence extraction and sequence fine-tuning, ensuring that the correct dependencies are installed for each task.
+
 
 ### 1. Caliberate your own writing utensil
 
