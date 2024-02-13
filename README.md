@@ -62,26 +62,35 @@ Due to package version dependencies, we need to set up two separate environments
    ```bash
    conda activate callli_rl
    ```
-
+   
 7. Follow **modify_env.md** and correct some flaws in the packages (Necessary!):
    
 By following these steps, you will have two separate conda environments configured for coarse sequence extraction and sequence fine-tuning, ensuring that the correct dependencies are installed for each task.
 
-
 ### 1. Caliberate your own writing utensil
 
-We provide three simple tools for modeling in the reinforcement learning environment: **Calligraphy brush**, **fude pen**, and **flat tip marker**. The geometry and dynamic properties are defined in './rl_finetune/Callienv/envs/tools.py' and folder './rl_finetune/tool_property/'. For robotic demonstration please callibrate the properties to bridge the sim-to-real gap. You can also define your own utensil easily.
+We provide three simple tools for modeling in the reinforcement learning environment: **Calligraphy brush**, **fude pen**, and **flat tip marker**. The geometry and dynamic properties are defined in `./rl_finetune/Callienv/envs/tools.py` and folder `./rl_finetune/tool_property/`. For robotic demonstration please callibrate the properties to bridge the sim-to-real gap. You can also define your own utensil easily.
 
-For calibrating the geometric properties, we provide a control script using the Dobot Magician robotic arm to write with a brush as an example. It allows the robotic arm to draw lines on paper at different z-axis heights, and by measuring the thickness of the strokes, one can fit the relationship with z.
+For calibrating the geometric properties, we provide a control script using the Dobot Magician robotic arm that models the $r-z$ correspondence.
 
 ### 2. Download pretrained models
 
 ### 3. Coarse Sequence Extraction
 
 ### 4. Tool-Aware Finetuning
+You can call the function to easily move inferenced sequences along with the images to `./rl_finetune/data/train_data' and `./rl_finetune/data/test_data'. Remember the number of train/test envs must be a divisor of the number of train/test data.
+   ```bash
+   conda activate calli_rl
+   cd ..
+   python move_data
+   cd rl_finetune
+   ```
+Then you can have an easy startup:
+   ```bash
+   bash ./scripts/train_brush.sh
+   ```
 
 ### 5. Visualization and robotic demonstration
-
 
 ## Train on your own data
 
