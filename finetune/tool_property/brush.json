@@ -1,9 +1,0 @@
-{
-        "r_min": 0,
-        "r_max": 0.064,
-        "l_min": 0,
-        "l_max": 0.17875,
-        "theta_min": 0,
-        "theta_max": 360,
-        "theta_step": 10
-}
