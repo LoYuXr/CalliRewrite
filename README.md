@@ -18,7 +18,7 @@ CalliRewrite is an unsupervised approach enabling low-cost robotic arms to repli
 glyphs by manipulating different writing tools. We use fine-tuned unsupervised LSTM to perform coarse stroke segmentation, and refine them through a reinforcement learning method to produce 
 fine-grained control.
 
-For more information, please visit our [**project page**](TODO-PROJECT-PAGE).
+For more information, please visit our [**project page**]([TODO-PROJECT-PAGE](https://luoprojectpage.github.io/callirewrite.github.io/)).
 
 ![CalliRewrite Teaser](demo/teaser.png)
 
