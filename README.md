@@ -7,7 +7,7 @@
 <div align="center">
     <a href="TODO-PAPER-ARXIV-LINK" target="_blank">
     <img src="https://img.shields.io/badge/Paper-arXiv-green" alt="Paper arXiv"></a>
-    <a href="TODO-PROJECT-PAGE" target="_blank">
+    <a href="https://luoprojectpage.github.io/callirewrite.github.io/" target="_blank">
     <img src="https://img.shields.io/badge/Page-CalliRewrite-blue" alt="Project Page"/></a>
 </div>
 </h2>
