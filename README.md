@@ -65,6 +65,7 @@ Due to package version dependencies, we need to set up two separate environments
    
 7. Follow **modify_env.md** and correct some flaws in the packages (Necessary!):
    
+
 By following these steps, you will have two separate conda environments configured for coarse sequence extraction and sequence fine-tuning, ensuring that the correct dependencies are installed for each task.
 
 ### 1. Caliberate your own writing utensil
@@ -77,7 +78,28 @@ For calibrating the geometric properties, we provide a control script using the 
 
 ### 3. Coarse Sequence Extraction
 
+#### Training
+
+   ```bash
+   conda activate calli_ext
+   cd seq_extract
+   ```
+Then you can train the two-phase model:
+   ```bash
+   bash ./train.sh
+   ```
+
+#### Testing with Trained Models
+
+For example, test the model saved in "outputs/snapshot/new_train_phase_2" on images in the "imgs" folder:
+
+ ```bash
+ python ./test.py --input imgs --model new_train_phase_2
+ ```
+
+
 ### 4. Tool-Aware Finetuning
+
 You can call the function to easily move inferenced sequences along with the images to `./rl_finetune/data/train_data' and `./rl_finetune/data/test_data'. Remember the number of train/test envs must be a divisor of the number of train/test data.
    ```bash
    conda activate calli_rl
