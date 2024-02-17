@@ -25,7 +25,7 @@ For more information, please visit our [**project page**](https://luoprojectpage
 
 ## 📬 News
 
-- **2024.2.125** Version 1.0 upload
+- **2024.2.25** Version 1.0 upload
 
 ## How to Use Our Code and Model:
 We release our network and checkpoints. You can setup the pipeline under the following guidance.
