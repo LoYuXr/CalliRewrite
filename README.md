@@ -70,33 +70,32 @@ By following these steps, you will have two separate conda environments configur
 
 ### 1. Caliberate your own writing utensil
 
-We provide three simple tools for modeling in the reinforcement learning environment: **Calligraphy brush**, **fude pen**, and **flat tip marker**. The geometry and dynamic properties are defined in `./rl_finetune/Callienv/envs/tools.py` and folder `./rl_finetune/tool_property/`. For robotic demonstration please callibrate the properties to bridge the sim-to-real gap. You can also define your own utensil easily.
+We provide three simple tools for modeling in the reinforcement learning environment: **Calligraphy brush**, **fude pen**, and **flat tip marker**. The geometry and dynamic properties are defined in `./rl_finetune/Callienv/envs/tools.py` and folder `./rl_finetune/tool_property/`.  You can also define your own utensil easily.
 
-For calibrating the geometric properties, we provide a control script using the Dobot Magician robotic arm that models the $r-z$ correspondence.
+
+For robotic demonstration, we provide a jupyter notebook in `./callibrate/callibrate.ipynb`. It clearly demonstrates the whole process to find out the $r-z$ correspondence on Dobot Magician robotic arm. Remember this step is crucial for it bridges the sim2real gap and may affect the rewriting result.
 
 ### 2. Download pretrained models
 
 ### 3. Coarse Sequence Extraction
 
 #### Training
-
+We conduct a two-phase progressive training, for the first phase we train on QuickDraw Dataset, you can simply run the shell command:
    ```bash
    conda activate calli_ext
    cd seq_extract
    ```
-Then you can train the two-phase model:
+Then you can train the two-phase model with your owncollected fine-tuned data:
    ```bash
    bash ./train.sh
    ```
 
 #### Testing with Trained Models
-
 For example, test the model saved in "outputs/snapshot/new_train_phase_2" on images in the "imgs" folder:
 
  ```bash
  python ./test.py --input imgs --model new_train_phase_2
  ```
-
 
 ### 4. Tool-Aware Finetuning
 
@@ -113,8 +112,6 @@ Then you can have an easy startup:
    ```
 
 ### 5. Visualization and robotic demonstration
-
-## Train on your own data
 
 
 ## Citation
