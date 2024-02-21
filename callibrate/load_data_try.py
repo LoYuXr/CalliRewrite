@@ -1,8 +1,8 @@
 import numpy as np
 
 def process(data, func, alpha=0.04, beta=0.5): #array, [p_t, x, y, r]
-    alpha = 0.04 #0.08 #size of image
-    beta = 0.5 #1.2  # to control the width of the strokes
+    #alpha: size of image
+    #beta: to control the width of the strokes
     record_x = []
     record_y = []
     record_z = []
@@ -12,17 +12,18 @@ def process(data, func, alpha=0.04, beta=0.5): #array, [p_t, x, y, r]
         p_t, x, y, r = data[i]  #单位是m
         
         x_, y_ = x*alpha, y*alpha
-        r_ = r*alpha*beta 
+        r_ = r*alpha*beta
 
         h = func(r_)
         h = h*100
+       
         
         if h is None:
             if i  == 0:
                 h = 0.1
             else:
                 h = record_z[-1] * 100
-        h -= 0.09  ## slightly modift
+        h -= 0.09  ## slightly modify
         h = h/100
         if p_t ==0:
             record_x.append(x_)
@@ -37,12 +38,12 @@ def process(data, func, alpha=0.04, beta=0.5): #array, [p_t, x, y, r]
             if type ==1:##楷书，我们从左上角进入：
                 record_x.append(x_ - 2 * r_)
                 record_y.append(y_ - 2 * r_)
-                record_z.append(0.02)  #离开纸面
+                record_z.append(0.05)  #离开纸面
                 
             else:##如果隶书，起笔位置是原来靠上
                 record_x.append(x_) 
                 record_y.append(y_)
-                record_z.append(0.02)
+                record_z.append(0.05)
                 
             record_x.append(x_) #加入当前点
             record_y.append(y_)
