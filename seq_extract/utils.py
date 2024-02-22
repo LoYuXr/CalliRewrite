@@ -6,6 +6,7 @@ import tensorflow as tf
 from PIL import Image
 import matplotlib.pyplot as plt
 import sys
+
 sys.path.append(r'D:\virtual_sketching-main\tools')
 import gif_making
 
@@ -94,7 +95,6 @@ def normal(x, width):
 
 
 def draw(f, width=128):
-
     x0, y0, x1, y1, x2, y2, z0, z2, w0, w2 = f
     x1 = x0 + (x2 - x0) * x1
     y1 = y0 + (y2 - y0) * y1
@@ -110,10 +110,10 @@ def draw(f, width=128):
     tmp = 1. / 100
     for i in range(100):
         t = i * tmp
-        x = (int)((1-t) * (1-t) * x0 + 2 * t * (1-t) * x1 + t * t * x2)
-        y = (int)((1-t) * (1-t) * y0 + 2 * t * (1-t) * y1 + t * t * y2)
-        z = (int)((1-t) * z0 + t * z2)
-        w = (1-t) * w0 + t * w2
+        x = (int)((1 - t) * (1 - t) * x0 + 2 * t * (1 - t) * x1 + t * t * x2)
+        y = (int)((1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * y1 + t * t * y2)
+        z = (int)((1 - t) * z0 + t * z2)
+        w = (1 - t) * w0 + t * w2
         cv2.circle(canvas, (y, x), z, w, -1)
     return 1 - cv2.resize(canvas, dsize=(width, width))
 
@@ -168,7 +168,7 @@ def save_seq_data(save_root, save_filename, strokes_data, init_cursors, image_si
     save1_npz_path = os.path.join("./tools/", save_filename + '.npz')
     np.savez(save1_npz_path, strokes_data=strokes_data, init_cursors=init_cursors,
              image_size=image_size, round_length=round_length, init_width=init_width)
-    gif_making.gif_making('./tools/'+save_filename + '.npz')
+    gif_making.gif_making('./tools/' + save_filename + '.npz')
 
 
 def image_pasting_v3_testing(patch_image, cursor, image_size, window_size_f, pasting_func, sess):
@@ -250,8 +250,8 @@ def draw_strokes(data, save_root, save_filename, input_img, image_size, init_cur
             f += [1.0, 1.0]
             gt_stroke_img = draw(f)  # (raster_size, raster_size), [0.0-stroke, 1.0-BG]
             gt_stroke_img_large = image_pasting_v3_testing(1.0 - gt_stroke_img, cursor_pos, image_size,
-                                                            curr_window_size,
-                                                            pasting_func, sess)  # [0.0-BG, 1.0-stroke]
+                                                           curr_window_size,
+                                                           pasting_func, sess)  # [0.0-BG, 1.0-stroke]
 
             if pen_state == 0:
                 canvas += gt_stroke_img_large  # [0.0-BG, 1.0-stroke]
@@ -313,7 +313,6 @@ def draw_strokes(data, save_root, save_filename, input_img, image_size, init_cur
         order_comp_save_root = os.path.join(save_root, 'order-compare')
         com_root = os.path.join(save_root, 'compare')
         color_root = os.path.join(save_root, 'color')
-
 
         os.makedirs(order_save_root, exist_ok=True)
         os.makedirs(order_comp_save_root, exist_ok=True)
@@ -386,13 +385,10 @@ def draw_strokes(data, save_root, save_filename, input_img, image_size, init_cur
         input_rgb = input_img
         plt.imshow(input_rgb)
 
-
-
         plt.subplot(rows, cols, 2)
         plt.title('Sketch Order', fontsize=12)
         plt.axis('off')
         plt.imshow(canvas_color)
-
 
         comp_save_path = os.path.join(com_root, save_filename)
         plt.savefig(comp_save_path)
@@ -412,7 +408,6 @@ def draw_strokes(data, save_root, save_filename, input_img, image_size, init_cur
             color_array[i * img_h: i * img_h + img_h, :, :] = color_rgb_set[i]
 
         plt.imshow(color_array)
-
 
         comp_save_path = os.path.join(color_root, save_filename)
         plt.savefig(comp_save_path)

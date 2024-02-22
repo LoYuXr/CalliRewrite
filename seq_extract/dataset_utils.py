@@ -37,7 +37,7 @@ class GeneralRawDataLoader(object):
 
         if height != width:
             # Padding to a square image
-            if self.test_dataset == 'clean_line_drawings'or self.test_dataset == '':
+            if self.test_dataset == 'clean_line_drawings' or self.test_dataset == '':
                 pad_value = [255, 255, 255]
             elif self.test_dataset == 'faces':
                 pad_value = [0, 0, 0]
@@ -468,7 +468,8 @@ def load_dataset_multi_object(dataset_base_dir, model_params):
                                              model_params['image_size_small'], model_params['image_size_large'],
                                              model_params['bin_gt'], is_train=True)
     val_set = GeneralMultiObjectDataLoader(val_stroke3_data,
-                                           eval_sample_model_params['batch_size'], eval_sample_model_params['raster_size'],
+                                           eval_sample_model_params['batch_size'],
+                                           eval_sample_model_params['raster_size'],
                                            eval_sample_model_params['image_size_small'],
                                            eval_sample_model_params['image_size_large'],
                                            eval_sample_model_params['bin_gt'], is_train=False)
@@ -557,7 +558,7 @@ class GeneralgbDataLoader(object):
             center = rst_photo_image.shape[0] // 2
 
             new_dim = float(crop_size) / (
-                        math.sin(angle_convert(abs(rotate_angle))) + math.cos(angle_convert(abs(rotate_angle))))
+                    math.sin(angle_convert(abs(rotate_angle))) + math.cos(angle_convert(abs(rotate_angle))))
             new_dim = int(round(new_dim))
 
             start_pos = center - new_dim // 2
@@ -571,7 +572,7 @@ class GeneralgbDataLoader(object):
         if percentage < stroke_cover:
             valid = False
 
-        return rst_photo_image,  valid
+        return rst_photo_image, valid
 
     def image_interpolation(self, photo, photo_prob):
         return photo
@@ -581,7 +582,7 @@ class GeneralgbDataLoader(object):
         if self.is_train:
             while True:
                 rand_img_idx = random.randint(0, len(self.photo_data) - 1)
-                
+
                 selected_sketch_shape = self.sketch_shape[rand_img_idx]
                 if selected_sketch_shape[0] >= image_size_rand and selected_sketch_shape[1] >= image_size_rand:
                     img_idx = rand_img_idx
@@ -590,13 +591,12 @@ class GeneralgbDataLoader(object):
             assert data_idx != -1
             img_idx = data_idx
 
-
         assert img_idx != -1
         selected_photo = self.photo_data[img_idx]
         selected_shape = self.sketch_shape[img_idx]
 
         assert interpolate_type in ['prob', 'image']
-        
+
         for trial_i in range(trial_times):
             cropped_photo, valid = \
                 self.crop_and_augment(selected_photo, selected_shape, image_size_rand, rotate_angle)
@@ -630,7 +630,7 @@ class GeneralgbDataLoader(object):
             photo_data_sub_batch = np.stack(photo_data_sub_batch,
                                             axis=0)  # (N, image_size, image_size, 3), [0.0-strokes, 1.0-BG]
             init_cursors_sub_batch = self.gen_init_cursors(photo_data_sub_batch, random_cursor, init_cursor_num)
-            
+
             photo_data_batch.append(photo_data_sub_batch)
             init_cursors_batch.append(init_cursors_sub_batch)
 
@@ -773,8 +773,9 @@ def load_dataset_gb(dataset_base_dir, model_params):
     ]
     return result
 
+
 def load_dataset_training(dataset_base_dir, model_params):
-    print('dataset_base_dir：',dataset_base_dir)
+    print('dataset_base_dir：', dataset_base_dir)
     dataset = model_params['data_set']
     if dataset == 'clean_line_drawings':
         return load_dataset_multi_object(dataset_base_dir, model_params)

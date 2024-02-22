@@ -94,7 +94,8 @@ class GizehRasterizor(object):
             stroke_imgs_list = np.stack(stroke_imgs_list,
                                         axis=-1)  # (image_size, image_size, seq_len-1), 0 for BG and 1 for strokes
             stroke_imgs_list = np.sum(stroke_imgs_list, axis=-1)
-            stroke_imgs_list = np.clip(stroke_imgs_list, 0.0, 1.0)  # (image_size, image_size), 0 for BG and 1 for strokes
+            stroke_imgs_list = np.clip(stroke_imgs_list, 0.0,
+                                       1.0)  # (image_size, image_size), 0 for BG and 1 for strokes
             sketch_imgs_list.append(stroke_imgs_list)
 
         return sketch_imgs_list
@@ -170,8 +171,10 @@ class GizehRasterizor(object):
         """
         norm_test_strokes3 = self.normalize_strokes_np(input_data, image_size)
         if version == 'v1':
-            raster_image_array = self.load_sketch_images_on_the_fly(image_size, norm_test_strokes3, stroke_width, is_bin=is_bin)
+            raster_image_array = self.load_sketch_images_on_the_fly(image_size, norm_test_strokes3, stroke_width,
+                                                                    is_bin=is_bin)
         else:
-            raster_image_array = self.load_sketch_images_on_the_fly_v2(image_size, norm_test_strokes3, stroke_width, is_bin=is_bin)
+            raster_image_array = self.load_sketch_images_on_the_fly_v2(image_size, norm_test_strokes3, stroke_width,
+                                                                       is_bin=is_bin)
 
         return raster_image_array

@@ -11,11 +11,12 @@ from vgg_utils.VGG16 import vgg_net_slim
 
 class DiffPastingV3(object):
     def __init__(self, raster_size):
-        x=tf.zeros([1,256,256])
-        vgg_net_slim(x,256)
+        x = tf.zeros([1, 256, 256])
+        vgg_net_slim(x, 256)
 
         self.patch_canvas = tf.compat.v1.placeholder(dtype=tf.float32,
-                                           shape=(None, None, 1))  # (raster_size, raster_size, 1), [0.0-BG, 1.0-stroke]
+                                                     shape=(None, None,
+                                                            1))  # (raster_size, raster_size, 1), [0.0-BG, 1.0-stroke]
         self.cursor_pos_a = tf.compat.v1.placeholder(dtype=tf.float32, shape=(2))  # (2), float32, in large size
         self.image_size_a = tf.compat.v1.placeholder(dtype=tf.int32, shape=())  # ()
         self.window_size_a = tf.compat.v1.placeholder(dtype=tf.float32, shape=())  # (), float32, with grad
@@ -26,7 +27,6 @@ class DiffPastingV3(object):
 
     def image_pasting_sampling_v3(self):
         padding_size = tf.cast(tf.math.ceil(self.window_size_a / 2.0), tf.int32)
-
 
         x1y1_a = self.cursor_pos_a - self.window_size_a / 2.0  # (2), float32
         x2y2_a = self.cursor_pos_a + self.window_size_a / 2.0  # (2), float32
@@ -161,7 +161,8 @@ class VirtualSketchingModel(object):
         self.dec_cell = dec_cell
 
         self.input_photo = tf.compat.v1.placeholder(dtype=tf.float32,
-                                          shape=[self.hps['batch_size'], None, None, self.hps['input_channel']])  # [0.0-stroke, 1.0-BG]
+                                                    shape=[self.hps['batch_size'], None, None,
+                                                           self.hps['input_channel']])  # [0.0-stroke, 1.0-BG]
         self.init_cursor = tf.compat.v1.placeholder(
             dtype=tf.float32,
             shape=[self.hps['batch_size'], 1, 2])  # (N, 1, 2), in size [0.0, 1.0)
@@ -245,11 +246,11 @@ class VirtualSketchingModel(object):
         window_size = tf.stop_gradient(window_size)
 
         entire_photo_small = tf.stop_gradient(tf.image.resize(entire_photo,
-                                                                      (self.hps['raster_size'], self.hps['raster_size']),
-                                                                      method=resize_method))
+                                                              (self.hps['raster_size'], self.hps['raster_size']),
+                                                              method=resize_method))
         entire_canvas_small = tf.stop_gradient(tf.image.resize(entire_canvas,
-                                                                      (self.hps['raster_size'], self.hps['raster_size']),
-                                                                      method=resize_method))
+                                                               (self.hps['raster_size'], self.hps['raster_size']),
+                                                               method=resize_method))
         entire_photo_small = self.normalize_image_m1to1(entire_photo_small)  # [-1.0-stroke, 1.0-BG]
         entire_canvas_small = self.normalize_image_m1to1(entire_canvas_small)  # [-1.0-stroke, 1.0-BG]
 
@@ -260,8 +261,9 @@ class VirtualSketchingModel(object):
         else:
             raise Exception('Unknown encode_cursor_type', self.hps['encode_cursor_type'])
 
-        batch_input_combined = tf.concat([patch_photo, patch_canvas, entire_photo_small, entire_canvas_small, cursor_info],
-                                axis=-1)  # [N, raster_size, raster_size, 6/10]
+        batch_input_combined = tf.concat(
+            [patch_photo, patch_canvas, entire_photo_small, entire_canvas_small, cursor_info],
+            axis=-1)  # [N, raster_size, raster_size, 6/10]
         batch_input_local = tf.concat([patch_photo, patch_canvas], axis=-1)  # [N, raster_size, raster_size, 2/4]
         batch_input_global = tf.concat([entire_photo_small, entire_canvas_small, cursor_info],
                                        axis=-1)  # [N, raster_size, raster_size, 4/6]
@@ -296,19 +298,26 @@ class VirtualSketchingModel(object):
         else:
             with tf.compat.v1.variable_scope('Combined_Encoder', reuse=tf.compat.v1.AUTO_REUSE):
                 if self.hps['encoder_type'] == 'conv10':
-                    image_embedding, _ = generative_cnn_encoder(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_encoder(batch_input_combined, is_training,
+                                                                dropout_keep_prob)  # (N, 128)
                 elif self.hps['encoder_type'] == 'conv10_deep':
-                    image_embedding, _ = generative_cnn_encoder_deeper(batch_input_combined, is_training, dropout_keep_prob)  # (N, 512)
+                    image_embedding, _ = generative_cnn_encoder_deeper(batch_input_combined, is_training,
+                                                                       dropout_keep_prob)  # (N, 512)
                 elif self.hps['encoder_type'] == 'conv13':
-                    image_embedding, _ = generative_cnn_encoder_deeper13(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_encoder_deeper13(batch_input_combined, is_training,
+                                                                         dropout_keep_prob)  # (N, 128)
                 elif self.hps['encoder_type'] == 'conv10_c3':
-                    image_embedding, _ = generative_cnn_c3_encoder(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_c3_encoder(batch_input_combined, is_training,
+                                                                   dropout_keep_prob)  # (N, 128)
                 elif self.hps['encoder_type'] == 'conv10_deep_c3':
-                    image_embedding, _ = generative_cnn_c3_encoder_deeper(batch_input_combined, is_training, dropout_keep_prob)  # (N, 512)
+                    image_embedding, _ = generative_cnn_c3_encoder_deeper(batch_input_combined, is_training,
+                                                                          dropout_keep_prob)  # (N, 512)
                 elif self.hps['encoder_type'] == 'conv13_c3':
-                    image_embedding, _ = generative_cnn_c3_encoder_deeper13(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_c3_encoder_deeper13(batch_input_combined, is_training,
+                                                                            dropout_keep_prob)  # (N, 128)
                 elif self.hps['encoder_type'] == 'conv13_c3_attn':
-                    image_embedding, _ = generative_cnn_c3_encoder_deeper13_attn(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_c3_encoder_deeper13_attn(batch_input_combined, is_training,
+                                                                                 dropout_keep_prob)  # (N, 128)
                 else:
                     raise Exception('Unknown encoder_type', self.hps['encoder_type'])
         return image_embedding
@@ -322,13 +331,16 @@ class VirtualSketchingModel(object):
 
         with tf.compat.v1.variable_scope('DEC_RNN_out_pen', reuse=tf.compat.v1.AUTO_REUSE):
             output_w_pen = tf.compat.v1.get_variable('output_w', [self.hps['dec_rnn_size'], pen_n_out])
-            output_b_pen = tf.compat.v1.get_variable('output_b', [pen_n_out], initializer=tf.compat.v1.constant_initializer(0.0))
+            output_b_pen = tf.compat.v1.get_variable('output_b', [pen_n_out],
+                                                     initializer=tf.compat.v1.constant_initializer(0.0))
             output_pen = tf.compat.v1.nn.xw_plus_b(rnn_output_flat, output_w_pen, output_b_pen)  # (N, pen_n_out)
 
         with tf.compat.v1.variable_scope('DEC_RNN_out_params', reuse=tf.compat.v1.AUTO_REUSE):
             output_w_params = tf.compat.v1.get_variable('output_w', [self.hps['dec_rnn_size'], params_n_out])
-            output_b_params = tf.compat.v1.get_variable('output_b', [params_n_out], initializer=tf.compat.v1.constant_initializer(0.0))
-            output_params = tf.compat.v1.nn.xw_plus_b(rnn_output_flat, output_w_params, output_b_params)  # (N, params_n_out)
+            output_b_params = tf.compat.v1.get_variable('output_b', [params_n_out],
+                                                        initializer=tf.compat.v1.constant_initializer(0.0))
+            output_params = tf.compat.v1.nn.xw_plus_b(rnn_output_flat, output_w_params,
+                                                      output_b_params)  # (N, params_n_out)
 
         output = tf.concat([output_pen, output_params], axis=1)  # (N, n_out)
 
@@ -345,7 +357,8 @@ class VirtualSketchingModel(object):
             x2y2 = tf.tanh(z_other_params_logits[:, 2:4])  # (N, 2)
             widths = tf.nn.sigmoid(z_other_params_logits[:, 4:5])  # (N, 1)
             widths = tf.add(tf.multiply(widths, 1.0 - self.hps['min_width']), self.hps['min_width'])
-            scaling = tf.nn.sigmoid(z_other_params_logits[:, 5:6]) * self.hps['max_scaling']  # (N, 1), [0.0, max_scaling]
+            scaling = tf.nn.sigmoid(z_other_params_logits[:, 5:6]) * self.hps[
+                'max_scaling']  # (N, 1), [0.0, max_scaling]
             z_other_params = tf.concat([x1y1, x2y2, widths, scaling], axis=-1)  # (N, 6)
         else:  # "rel"
             raise Exception('Unknown position_format', self.hps['position_format'])
@@ -382,7 +395,8 @@ class VirtualSketchingModel(object):
                     [window_size // 2, window_size // 2],
                     [window_size // 2, window_size // 2],
                     [0, 0]]
-        pad_img = tf.pad(tensor=ori_image, paddings=paddings, mode='CONSTANT', constant_values=pad_value)  # (N, H_p, W_p, k)
+        pad_img = tf.pad(tensor=ori_image, paddings=paddings, mode='CONSTANT',
+                         constant_values=pad_value)  # (N, H_p, W_p, k)
         return pad_img
 
     def image_cropping_fn(self, fn_inputs):
@@ -406,7 +420,7 @@ class VirtualSketchingModel(object):
 
         # resize to raster_size
         patch_image_scaled = tf.image.resize(patch_image, (self.hps['raster_size'], self.hps['raster_size']),
-                                                    method=tf.image.ResizeMethod.AREA)
+                                             method=tf.image.ResizeMethod.AREA)
         patch_image_scaled = tf.squeeze(patch_image_scaled, axis=0)
         # patch_canvas_scaled: (raster_size, raster_size, 2/4), [0.0-BG, 1.0-stroke]
 
@@ -432,7 +446,8 @@ class VirtualSketchingModel(object):
 
         fn_inputs = tf.concat([input_img_, cursor_position_, image_size_, window_sizes_],
                               axis=-1)  # (N, image_size, image_size, 2/4 + 4)
-        curr_patch_imgs = tf.map_fn(self.image_cropping_fn, fn_inputs, parallel_iterations=32)  # (N, raster_size, raster_size, -)
+        curr_patch_imgs = tf.map_fn(self.image_cropping_fn, fn_inputs,
+                                    parallel_iterations=32)  # (N, raster_size, raster_size, -)
         return curr_patch_imgs
 
     def image_cropping_v3(self, cursor_position, input_img, image_size, window_sizes):
@@ -483,7 +498,8 @@ class VirtualSketchingModel(object):
         other_params_list = []
         pen_ras_list = []
 
-        curr_canvas_soft = tf.zeros_like(self.input_photo[:, :, :, 0])  # (N, image_size, image_size), [0.0-BG, 1.0-stroke]
+        curr_canvas_soft = tf.zeros_like(
+            self.input_photo[:, :, :, 0])  # (N, image_size, image_size), [0.0-BG, 1.0-stroke]
         curr_canvas_hard = tf.zeros_like(curr_canvas_soft)  # [0.0-BG, 1.0-stroke]
 
         #### sampling part - start ####
@@ -523,7 +539,8 @@ class VirtualSketchingModel(object):
 
             # Normalizing image
             curr_patch_canvas_hard_non_grad = 1.0 - curr_patch_canvas_hard_non_grad  # [0.0-stroke, 1.0-BG]
-            curr_patch_canvas_hard_non_grad = self.normalize_image_m1to1(curr_patch_canvas_hard_non_grad)  # [-1.0-stroke, 1.0-BG]
+            curr_patch_canvas_hard_non_grad = self.normalize_image_m1to1(
+                curr_patch_canvas_hard_non_grad)  # [-1.0-stroke, 1.0-BG]
 
             ## image-level encoding
             combined_z = self.build_combined_encoder(
@@ -581,6 +598,7 @@ class VirtualSketchingModel(object):
         :param input_pen: (N, n_class)
         :return: pen_state: (N, 1)
         """
+
         def sign_onehot(x):
             """
             :param x: (N, n_class)

@@ -46,9 +46,9 @@ class VirtualSketchingModel(object):
         perc_relu_raw_list = []
         perc_relu_norm_list = []
         sn_loss_list = []
-        smoothness_loss_list=[]
-        raster_loss_list=[]
-        angle_loss_list=[]
+        smoothness_loss_list = []
+        raster_loss_list = []
+        angle_loss_list = []
         cursor_outside_loss_list = []
         win_size_outside_loss_list = []
         early_state_loss_list = []
@@ -59,7 +59,7 @@ class VirtualSketchingModel(object):
         pred_raster_imgs_rgb_list = []
 
         for t_i in range(self.total_loop):
-            print('total_loop',self.total_loop)
+            print('total_loop', self.total_loop)
             gpu_idx = t_i // self.hps['loop_per_gpu']
             gpu_i = self.hps['gpus'][gpu_idx]
             print(self.hps['model_mode'], 'model, gpu:', gpu_i, ', loop:', t_i % self.hps['loop_per_gpu'])
@@ -92,10 +92,11 @@ class VirtualSketchingModel(object):
                     else:
                         split_target_sketch = self.target_sketch_list[t_i]
 
-                    ## use pred as the prev points
+                    # use pred as the prev points
                     other_params, pen_ras, final_state, pred_raster_images, pred_raster_images_rgb, \
                     pos_before_max_min, win_size_before_max_min \
-                        = self.get_points_and_raster_image(split_initial_state, split_target_sketch ,split_init_cursor, split_input_photo,
+                        = self.get_points_and_raster_image(split_initial_state, split_target_sketch, split_init_cursor,
+                                                           split_input_photo,
                                                            split_image_size)
                     # other_params: (N * max_seq_len, 6)
                     # pen_ras: (N * max_seq_len, 2), after softmax
@@ -110,14 +111,15 @@ class VirtualSketchingModel(object):
                     if not self.hps['use_softargmax']:
                         pen_state_soft = pen_ras[:, 1:2]  # (N * max_seq_len, 1)
                     else:
-                        pen_state_soft = self.differentiable_argmax(pen_ras, self.hps['soft_beta'])  # (N * max_seq_len, 1)
+                        pen_state_soft = self.differentiable_argmax(pen_ras,
+                                                                    self.hps['soft_beta'])  # (N * max_seq_len, 1)
 
                     pred_params = tf.concat([pen_state_soft, other_params], axis=1)  # (N * max_seq_len, 7)
                     pred_params = tf.reshape(pred_params, shape=[-1, self.hps['max_seq_len'], 7])  # (N, max_seq_len, 7)
                     # pred_params: (N, max_seq_len, 7)
 
                     if self.hps['model_mode'] == 'train' or self.hps['model_mode'] == 'eval':
-                        raster_cost, sn_cost, smoothness_cost,angle_cost,cursor_outside_cost, winsize_outside_cost, \
+                        raster_cost, sn_cost, smoothness_cost, angle_cost, cursor_outside_cost, winsize_outside_cost, \
                         early_pen_states_cost, \
                         perc_relu_loss_raw, perc_relu_loss_norm = \
                             self.build_losses(split_target_sketch, pred_raster_imgs, pred_params,
@@ -137,23 +139,27 @@ class VirtualSketchingModel(object):
 
                         if self.hps['model_mode'] == 'train':
                             total_cost_split, grads_and_vars_split = self.build_training_op_split(
-                                raster_cost, sn_cost, smoothness_cost, angle_cost, cursor_outside_cost, winsize_outside_cost,
+                                raster_cost, sn_cost, smoothness_cost, angle_cost, cursor_outside_cost,
+                                winsize_outside_cost,
                                 early_pen_states_cost)
                             total_loss_list.append(total_cost_split)
                             tower_grads.append(grads_and_vars_split)
         self.raster_cost = tf.reduce_mean(input_tensor=tf.stack(ras_loss_list, axis=0))
-        self.perc_relu_losses_raw = tf.reduce_mean(input_tensor=tf.stack(perc_relu_raw_list, axis=0), axis=0)  # (n_layers)
-        self.perc_relu_losses_norm = tf.reduce_mean(input_tensor=tf.stack(perc_relu_norm_list, axis=0), axis=0)  # (n_layers)
+        self.perc_relu_losses_raw = tf.reduce_mean(input_tensor=tf.stack(perc_relu_raw_list, axis=0),
+                                                   axis=0)  # (n_layers)
+        self.perc_relu_losses_norm = tf.reduce_mean(input_tensor=tf.stack(perc_relu_norm_list, axis=0),
+                                                    axis=0)  # (n_layers)
         self.stroke_num_cost = tf.reduce_mean(input_tensor=tf.stack(sn_loss_list, axis=0))
         self.smoothness_cost = tf.reduce_mean(input_tensor=tf.stack(smoothness_loss_list, axis=0))
-        #self.raster_sum_cost = tf.reduce_mean(tf.stack(raster_loss_list, axis=0))
+        # self.raster_sum_cost = tf.reduce_mean(tf.stack(raster_loss_list, axis=0))
         self.angle_cost = tf.reduce_mean(input_tensor=tf.stack(angle_loss_list, axis=0))
         self.pos_outside_cost = tf.reduce_mean(input_tensor=tf.stack(cursor_outside_loss_list, axis=0))
         self.win_size_outside_cost = tf.reduce_mean(input_tensor=tf.stack(win_size_outside_loss_list, axis=0))
         self.early_pen_states_cost = tf.reduce_mean(input_tensor=tf.stack(early_state_loss_list, axis=0))
         self.cost = tf.reduce_mean(input_tensor=tf.stack(total_loss_list, axis=0))
 
-        self.pred_raster_imgs = tf.concat(pred_raster_imgs_list, axis=0)  # (N, image_size, image_size), [0.0-stroke, 1.0-BG]
+        self.pred_raster_imgs = tf.concat(pred_raster_imgs_list,
+                                          axis=0)  # (N, image_size, image_size), [0.0-stroke, 1.0-BG]
         self.pred_raster_imgs_rgb = tf.concat(pred_raster_imgs_rgb_list, axis=0)  # (N, image_size, image_size, 3)
 
         if self.hps['model_mode'] == 'train':
@@ -209,19 +215,24 @@ class VirtualSketchingModel(object):
         self.init_cursor_list = tf.split(self.init_cursor, self.total_loop, axis=0)
         self.input_photo_list = []
         for loop_i in range(self.total_loop):
-            input_photo_i = tf.compat.v1.placeholder(dtype=tf.float32, shape=[None, None, None, self.hps['input_channel']])  # [0.0-stroke, 1.0-BG]
+            input_photo_i = tf.compat.v1.placeholder(dtype=tf.float32, shape=[None, None, None, self.hps[
+                'input_channel']])  # [0.0-stroke, 1.0-BG]
             self.input_photo_list.append(input_photo_i)
 
         if self.hps['input_channel'] == 3:
             self.target_sketch_list = []
             for loop_i in range(self.total_loop):
-                target_sketch_i = tf.compat.v1.placeholder(dtype=tf.float32, shape=[None, None, None, 1])  # [0.0-stroke, 1.0-BG]
+                target_sketch_i = tf.compat.v1.placeholder(dtype=tf.float32,
+                                                           shape=[None, None, None, 1])  # [0.0-stroke, 1.0-BG]
                 self.target_sketch_list.append(target_sketch_i)
 
         if self.hps['model_mode'] == 'train' or self.hps['model_mode'] == 'eval':
-            self.stroke_num_loss_weight = tf.compat.v1.placeholder_with_default(tf.constant(0.0, dtype=tf.float32), shape=())
-            self.early_pen_loss_start_idx = tf.compat.v1.placeholder_with_default(tf.constant(0, dtype=tf.int64), shape=())
-            self.early_pen_loss_end_idx = tf.compat.v1.placeholder_with_default(tf.constant(0, dtype=tf.int64), shape=())
+            self.stroke_num_loss_weight = tf.compat.v1.placeholder_with_default(tf.constant(0.0, dtype=tf.float32),
+                                                                                shape=())
+            self.early_pen_loss_start_idx = tf.compat.v1.placeholder_with_default(tf.constant(0, dtype=tf.int64),
+                                                                                  shape=())
+            self.early_pen_loss_end_idx = tf.compat.v1.placeholder_with_default(tf.constant(0, dtype=tf.int64),
+                                                                                shape=())
 
         if self.hps['model_mode'] == 'train':
             self.perc_loss_mean_list = []
@@ -231,7 +242,8 @@ class VirtualSketchingModel(object):
             self.last_step_num = tf.compat.v1.placeholder_with_default(tf.constant(0.0, dtype=tf.float32), shape=())
 
             with tf.compat.v1.variable_scope('train_op', reuse=tf.compat.v1.AUTO_REUSE):
-                self.lr = tf.compat.v1.placeholder_with_default(tf.constant(self.hps['learning_rate'], dtype=tf.float32),  shape=())
+                self.lr = tf.compat.v1.placeholder_with_default(
+                    tf.constant(self.hps['learning_rate'], dtype=tf.float32), shape=())
                 self.optimizer = tf.compat.v1.train.AdamOptimizer(self.lr)
 
     ###########################
@@ -303,11 +315,11 @@ class VirtualSketchingModel(object):
         window_size = tf.stop_gradient(window_size)
 
         entire_photo_small = tf.stop_gradient(tf.image.resize(entire_photo,
-                                                                      (self.hps['raster_size'], self.hps['raster_size']),
-                                                                      method=resize_method))
+                                                              (self.hps['raster_size'], self.hps['raster_size']),
+                                                              method=resize_method))
         entire_canvas_small = tf.stop_gradient(tf.image.resize(entire_canvas,
-                                                                      (self.hps['raster_size'], self.hps['raster_size']),
-                                                                      method=resize_method))
+                                                               (self.hps['raster_size'], self.hps['raster_size']),
+                                                               method=resize_method))
         entire_photo_small = self.normalize_image_m1to1(entire_photo_small)  # [-1.0-stroke, 1.0-BG]
         entire_canvas_small = self.normalize_image_m1to1(entire_canvas_small)  # [-1.0-stroke, 1.0-BG]
 
@@ -318,8 +330,9 @@ class VirtualSketchingModel(object):
         else:
             raise Exception('Unknown encode_cursor_type', self.hps['encode_cursor_type'])
 
-        batch_input_combined = tf.concat([patch_photo, patch_canvas, entire_photo_small, entire_canvas_small, cursor_info],
-                                axis=-1)  # [N, raster_size, raster_size, 6/10]
+        batch_input_combined = tf.concat(
+            [patch_photo, patch_canvas, entire_photo_small, entire_canvas_small, cursor_info],
+            axis=-1)  # [N, raster_size, raster_size, 6/10]
         batch_input_local = tf.concat([patch_photo, patch_canvas], axis=-1)  # [N, raster_size, raster_size, 2/4]
         batch_input_global = tf.concat([entire_photo_small, entire_canvas_small, cursor_info],
                                        axis=-1)  # [N, raster_size, raster_size, 4/6]
@@ -354,19 +367,26 @@ class VirtualSketchingModel(object):
         else:
             with tf.compat.v1.variable_scope('Combined_Encoder', reuse=tf.compat.v1.AUTO_REUSE):
                 if self.hps['encoder_type'] == 'conv10':
-                    image_embedding, _ = generative_cnn_encoder(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_encoder(batch_input_combined, is_training,
+                                                                dropout_keep_prob)  # (N, 128)
                 elif self.hps['encoder_type'] == 'conv10_deep':
-                    image_embedding, _ = generative_cnn_encoder_deeper(batch_input_combined, is_training, dropout_keep_prob)  # (N, 512)
+                    image_embedding, _ = generative_cnn_encoder_deeper(batch_input_combined, is_training,
+                                                                       dropout_keep_prob)  # (N, 512)
                 elif self.hps['encoder_type'] == 'conv13':
-                    image_embedding, _ = generative_cnn_encoder_deeper13(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_encoder_deeper13(batch_input_combined, is_training,
+                                                                         dropout_keep_prob)  # (N, 128)
                 elif self.hps['encoder_type'] == 'conv10_c3':
-                    image_embedding, _ = generative_cnn_c3_encoder(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_c3_encoder(batch_input_combined, is_training,
+                                                                   dropout_keep_prob)  # (N, 128)
                 elif self.hps['encoder_type'] == 'conv10_deep_c3':
-                    image_embedding, _ = generative_cnn_c3_encoder_deeper(batch_input_combined, is_training, dropout_keep_prob)  # (N, 512)
+                    image_embedding, _ = generative_cnn_c3_encoder_deeper(batch_input_combined, is_training,
+                                                                          dropout_keep_prob)  # (N, 512)
                 elif self.hps['encoder_type'] == 'conv13_c3':
-                    image_embedding, _ = generative_cnn_c3_encoder_deeper13(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_c3_encoder_deeper13(batch_input_combined, is_training,
+                                                                            dropout_keep_prob)  # (N, 128)
                 elif self.hps['encoder_type'] == 'conv13_c3_attn':
-                    image_embedding, _ = generative_cnn_c3_encoder_deeper13_attn(batch_input_combined, is_training, dropout_keep_prob)  # (N, 128)
+                    image_embedding, _ = generative_cnn_c3_encoder_deeper13_attn(batch_input_combined, is_training,
+                                                                                 dropout_keep_prob)  # (N, 128)
                 else:
                     raise Exception('Unknown encoder_type', self.hps['encoder_type'])
         return image_embedding
@@ -380,13 +400,16 @@ class VirtualSketchingModel(object):
 
         with tf.compat.v1.variable_scope('DEC_RNN_out_pen', reuse=tf.compat.v1.AUTO_REUSE):
             output_w_pen = tf.compat.v1.get_variable('output_w', [self.hps['dec_rnn_size'], pen_n_out])
-            output_b_pen = tf.compat.v1.get_variable('output_b', [pen_n_out], initializer=tf.compat.v1.constant_initializer(0.0))
+            output_b_pen = tf.compat.v1.get_variable('output_b', [pen_n_out],
+                                                     initializer=tf.compat.v1.constant_initializer(0.0))
             output_pen = tf.compat.v1.nn.xw_plus_b(rnn_output_flat, output_w_pen, output_b_pen)  # (N, pen_n_out)
 
         with tf.compat.v1.variable_scope('DEC_RNN_out_params', reuse=tf.compat.v1.AUTO_REUSE):
             output_w_params = tf.compat.v1.get_variable('output_w', [self.hps['dec_rnn_size'], params_n_out])
-            output_b_params = tf.compat.v1.get_variable('output_b', [params_n_out], initializer=tf.compat.v1.constant_initializer(0.0))
-            output_params = tf.compat.v1.nn.xw_plus_b(rnn_output_flat, output_w_params, output_b_params)  # (N, params_n_out)
+            output_b_params = tf.compat.v1.get_variable('output_b', [params_n_out],
+                                                        initializer=tf.compat.v1.constant_initializer(0.0))
+            output_params = tf.compat.v1.nn.xw_plus_b(rnn_output_flat, output_w_params,
+                                                      output_b_params)  # (N, params_n_out)
 
         output = tf.concat([output_pen, output_params], axis=1)  # (N, n_out)
 
@@ -403,7 +426,8 @@ class VirtualSketchingModel(object):
             x2y2 = tf.tanh(z_other_params_logits[:, 2:4])  # (N, 2)
             widths = tf.nn.sigmoid(z_other_params_logits[:, 4:5])  # (N, 1)
             widths = tf.add(tf.multiply(widths, 1.0 - self.hps['min_width']), self.hps['min_width'])
-            scaling = tf.nn.sigmoid(z_other_params_logits[:, 5:6]) * self.hps['max_scaling']  # (N, 1), [0.0, max_scaling]
+            scaling = tf.nn.sigmoid(z_other_params_logits[:, 5:6]) * self.hps[
+                'max_scaling']  # (N, 1), [0.0, max_scaling]
             z_other_params = tf.concat([x1y1, x2y2, widths, scaling], axis=-1)  # (N, 6)
         else:  # "rel"
             raise Exception('Unknown position_format', self.hps['position_format'])
@@ -440,7 +464,8 @@ class VirtualSketchingModel(object):
                     [window_size // 2, window_size // 2],
                     [window_size // 2, window_size // 2],
                     [0, 0]]
-        pad_img = tf.pad(tensor=ori_image, paddings=paddings, mode='CONSTANT', constant_values=pad_value)  # (N, H_p, W_p, k)
+        pad_img = tf.pad(tensor=ori_image, paddings=paddings, mode='CONSTANT',
+                         constant_values=pad_value)  # (N, H_p, W_p, k)
         return pad_img
 
     def image_cropping_fn(self, fn_inputs):
@@ -464,7 +489,7 @@ class VirtualSketchingModel(object):
 
         # resize to raster_size
         patch_image_scaled = tf.image.resize(patch_image, (self.hps['raster_size'], self.hps['raster_size']),
-                                                    method=tf.image.ResizeMethod.AREA)
+                                             method=tf.image.ResizeMethod.AREA)
         patch_image_scaled = tf.squeeze(patch_image_scaled, axis=0)
         # patch_canvas_scaled: (raster_size, raster_size, 2/4), [0.0-BG, 1.0-stroke]
 
@@ -490,7 +515,8 @@ class VirtualSketchingModel(object):
 
         fn_inputs = tf.concat([input_img_, cursor_position_, image_size_, window_sizes_],
                               axis=-1)  # (N, image_size, image_size, 2/4 + 4)
-        curr_patch_imgs = tf.map_fn(self.image_cropping_fn, fn_inputs, parallel_iterations=32)  # (N, raster_size, raster_size, -)
+        curr_patch_imgs = tf.map_fn(self.image_cropping_fn, fn_inputs,
+                                    parallel_iterations=32)  # (N, raster_size, raster_size, -)
         return curr_patch_imgs
 
     def image_cropping_v3(self, cursor_position, input_img, image_size, window_sizes):
@@ -556,7 +582,7 @@ class VirtualSketchingModel(object):
 
         patch_image_scaled = tf.expand_dims(patch_image, axis=0)  # (1, raster_size, raster_size, 1)
         patch_image_scaled = tf.image.resize(patch_image_scaled, (window_size, window_size),
-                                                    method=tf.image.ResizeMethod.BILINEAR)
+                                             method=tf.image.ResizeMethod.BILINEAR)
         patch_image_scaled = tf.squeeze(patch_image_scaled, axis=0)
         # patch_canvas_scaled: (window_size, window_size, 1)
 
@@ -587,7 +613,7 @@ class VirtualSketchingModel(object):
 
         patch_canvas_scaled = tf.expand_dims(patch_canvas, axis=0)  # (1, raster_size, raster_size, 1)
         patch_canvas_scaled = tf.image.resize(patch_canvas_scaled, (window_size, window_size),
-                                                     method=tf.image.ResizeMethod.BILINEAR)
+                                              method=tf.image.ResizeMethod.BILINEAR)
         # patch_canvas_scaled: (1, window_size, window_size, 1)
 
         valid_canvas = self.image_pasting_diff_batch(patch_canvas_scaled,
@@ -778,10 +804,11 @@ class VirtualSketchingModel(object):
             patch_img_ = tf.expand_dims(patch_img, axis=-1)  # (N, raster_size, raster_size, 1)
             cursor_position_step = tf.reshape(cursor_position, (-1, 1, 1, 2))  # (N, 1, 1, 2)
             cursor_position_step = tf.tile(cursor_position_step, [1, self.hps['raster_size'], self.hps['raster_size'],
-                                           1])  # (N, raster_size, raster_size, 2)
+                                                                  1])  # (N, raster_size, raster_size, 2)
             image_size_tile = tf.reshape(tf.cast(image_size, tf.float32), (1, 1, 1, 1))  # (N, 1, 1, 1)
-            image_size_tile = tf.tile(image_size_tile, [self.hps['batch_size'] // self.total_loop, self.hps['raster_size'],
-                                      self.hps['raster_size'], 1])
+            image_size_tile = tf.tile(image_size_tile,
+                                      [self.hps['batch_size'] // self.total_loop, self.hps['raster_size'],
+                                       self.hps['raster_size'], 1])
             window_sizes_tile = tf.reshape(window_sizes, (-1, 1, 1, 1))  # (N, 1, 1, 1)
             window_sizes_tile = tf.tile(window_sizes_tile, [1, self.hps['raster_size'], self.hps['raster_size'], 1])
 
@@ -796,7 +823,7 @@ class VirtualSketchingModel(object):
 
     def get_points_and_raster_image(self, initial_state, target_sketch, init_cursor, input_photo, image_size):
 
-        ## generate the other_params and pen_ras and raster image for raster loss
+        # generate the other_params and pen_ras and raster image for raster loss
         prev_state = initial_state  # (N, dec_rnn_size * 3)
 
         prev_width = self.init_width  # (1)
@@ -818,7 +845,8 @@ class VirtualSketchingModel(object):
         win_size_before_max_min_list = []
 
         curr_canvas_soft = tf.zeros_like(input_photo[:, :, :, 0])  # (N, image_size, image_size), [0.0-BG, 1.0-stroke]
-        curr_canvas_soft_rgb = tf.tile(tf.zeros_like(input_photo[:, :, :, 0:1]), [1, 1, 1, 3])  # (N, image_size, image_size, 3), [0.0-BG, 1.0-stroke]
+        curr_canvas_soft_rgb = tf.tile(tf.zeros_like(input_photo[:, :, :, 0:1]),
+                                       [1, 1, 1, 3])  # (N, image_size, image_size, 3), [0.0-BG, 1.0-stroke]
         curr_canvas_hard = tf.zeros_like(curr_canvas_soft)  # [0.0-BG, 1.0-stroke]
 
         #### sampling part - start ####
@@ -842,7 +870,6 @@ class VirtualSketchingModel(object):
         else:
             raise Exception('Unknown pasting_type', self.hps['pasting_type'])
 
-
         for time_i in range(self.hps['max_seq_len']):
             cursor_position_non_grad = tf.stop_gradient(cursor_position_loop)  # (N, 1, 2), in size [0.0, 1.0)
 
@@ -850,7 +877,7 @@ class VirtualSketchingModel(object):
             curr_window_size = tf.maximum(curr_window_size, tf.cast(self.hps['min_window_size'], tf.float32))
             curr_window_size = tf.minimum(curr_window_size, tf.cast(image_size, tf.float32))
 
-            ## patch-level encoding
+            # patch-level encoding
             # Here, we make the gradients from canvas_z to curr_canvas_hard be None to avoid recurrent gradient propagation.
             curr_canvas_hard_non_grad = tf.stop_gradient(self.curr_canvas_hard)
             curr_canvas_hard_non_grad = tf.expand_dims(curr_canvas_hard_non_grad, axis=-1)
@@ -870,9 +897,10 @@ class VirtualSketchingModel(object):
 
             # Normalizing image
             curr_patch_canvas_hard_non_grad = 1.0 - curr_patch_canvas_hard_non_grad  # [0.0-stroke, 1.0-BG]
-            curr_patch_canvas_hard_non_grad = self.normalize_image_m1to1(curr_patch_canvas_hard_non_grad)  # [-1.0-stroke, 1.0-BG]
+            curr_patch_canvas_hard_non_grad = self.normalize_image_m1to1(
+                curr_patch_canvas_hard_non_grad)  # [-1.0-stroke, 1.0-BG]
 
-            ## image-level encoding
+            # image-level encoding
             combined_z = self.build_combined_encoder(
                 curr_patch_canvas_hard_non_grad,
                 curr_patch_inputs,
@@ -918,23 +946,25 @@ class VirtualSketchingModel(object):
             if self.hps['model_mode'] == 'train' or self.hps['model_mode'] == 'eval' \
                     or self.hps['model_mode'] == 'eval_sample':
                 # use renderer here to convert the strokes to image
-                curr_other_params = tf.squeeze(o_other_params, axis=1)  # (N, 6), (x1, y1)=[0.0, 1.0], (x2, y2)=[-1.0, 1.0]
-                x1y1, x2y2, width2, scaling = curr_other_params[:, 0:2], curr_other_params[:, 2:4],\
+                curr_other_params = tf.squeeze(o_other_params,
+                                               axis=1)  # (N, 6), (x1, y1)=[0.0, 1.0], (x2, y2)=[-1.0, 1.0]
+                x1y1, x2y2, width2, scaling = curr_other_params[:, 0:2], curr_other_params[:, 2:4], \
                                               curr_other_params[:, 4:5], curr_other_params[:, 5:6]
                 x0y0 = tf.zeros_like(x2y2)  # (N, 2), [-1.0, 1.0]
                 x0y0 = tf.compat.v1.div(tf.add(x0y0, 1.0), 2.0)  # (N, 2), [0.0, 1.0]
                 x2y2 = tf.compat.v1.div(tf.add(x2y2, 1.0), 2.0)  # (N, 2), [0.0, 1.0]
                 widths = tf.concat([tf.squeeze(prev_width, axis=1), width2], axis=1)  # (N, 2)
-                curr_other_params = tf.concat([x0y0, x1y1, x2y2, widths], axis=-1)  # (N, 8), (x0, y0)&(x2, y2)=[0.0, 1.0]
+                curr_other_params = tf.concat([x0y0, x1y1, x2y2, widths],
+                                              axis=-1)  # (N, 8), (x0, y0)&(x2, y2)=[0.0, 1.0]
                 curr_stroke_image = rasterizor_st.raster_func_stroke_abs(curr_other_params)
                 # (N, raster_size, raster_size), [0.0-BG, 1.0-stroke]
 
                 curr_stroke_image_large = pasting_func(cursor_position_loop, curr_stroke_image,
-                                                             image_size, curr_window_size,
-                                                             is_differentiable=self.hps['pasting_diff'])
+                                                       image_size, curr_window_size,
+                                                       is_differentiable=self.hps['pasting_diff'])
                 # (N, image_size, image_size), [0.0-BG, 1.0-stroke]
 
-                ## soft
+                # soft
                 if not self.hps['use_softargmax']:
                     curr_state_soft = o_pen_ras[:, 1:2]  # (N, 1)
                 else:
@@ -945,14 +975,14 @@ class VirtualSketchingModel(object):
                 filter_curr_stroke_image_soft = tf.multiply(tf.subtract(1.0, curr_state_soft), curr_stroke_image_large)
                 # (N, image_size, image_size), [0.0-BG, 1.0-stroke]
                 curr_canvas_soft = tf.add(curr_canvas_soft, filter_curr_stroke_image_soft)  # [0.0-BG, 1.0-stroke]
-                ## hard
+                # hard
                 curr_state_hard = tf.expand_dims(tf.cast(tf.argmax(input=o_pen_ras_raw, axis=-1), dtype=tf.float32),
-                                                     axis=-1)  # (N, 1, 1)
+                                                 axis=-1)  # (N, 1, 1)
                 filter_curr_stroke_image_hard = tf.multiply(tf.subtract(1.0, curr_state_hard), curr_stroke_image_large)
                 # (N, image_size, image_size), [0.0-BG, 1.0-stroke]
-                self.curr_canvas_hard = tf.add(self.curr_canvas_hard, filter_curr_stroke_image_hard)  # [0.0-BG, 1.0-stroke]
+                self.curr_canvas_hard = tf.add(self.curr_canvas_hard,
+                                               filter_curr_stroke_image_hard)  # [0.0-BG, 1.0-stroke]
                 self.curr_canvas_hard = tf.clip_by_value(self.curr_canvas_hard, 0.0, 1.0)  # [0.0-BG, 1.0-stroke]
-
 
             next_width = o_other_params[:, :, 4:5]
             next_scaling = o_other_params[:, :, 5:6]
@@ -971,12 +1001,14 @@ class VirtualSketchingModel(object):
             new_cursor_offsets = tf.multiply(o_other_params[:, :, 2:4],
                                              tf.divide(curr_window_size, 2.0))  # (N, 1, 2), window-level
             new_cursor_offset_next = new_cursor_offsets
-            new_cursor_offset_next = tf.concat([new_cursor_offset_next[:, :, 1:2], new_cursor_offset_next[:, :, 0:1]], axis=-1)
+            new_cursor_offset_next = tf.concat([new_cursor_offset_next[:, :, 1:2], new_cursor_offset_next[:, :, 0:1]],
+                                               axis=-1)
 
             cursor_position_loop_large = tf.multiply(cursor_position_loop, tf.cast(image_size, tf.float32))
 
             if self.hps['stop_accu_grad']:
-                stroke_position_next = tf.stop_gradient(cursor_position_loop_large) + new_cursor_offset_next  # (N, 1, 2), large-level
+                stroke_position_next = tf.stop_gradient(
+                    cursor_position_loop_large) + new_cursor_offset_next  # (N, 1, 2), large-level
             else:
                 stroke_position_next = cursor_position_loop_large + new_cursor_offset_next  # (N, 1, 2), large-level
 
@@ -992,7 +1024,8 @@ class VirtualSketchingModel(object):
             cursor_position_loop_large = tf.minimum(cursor_position_loop_large, tf.cast(image_size - 1, tf.float32))
             cursor_position_loop = tf.compat.v1.div(cursor_position_loop_large, tf.cast(image_size, tf.float32))
 
-        curr_canvas_soft = tf.clip_by_value(curr_canvas_soft, 0.0, 1.0)  # (N, raster_size, raster_size), [0.0-BG, 1.0-stroke]
+        curr_canvas_soft = tf.clip_by_value(curr_canvas_soft, 0.0,
+                                            1.0)  # (N, raster_size, raster_size), [0.0-BG, 1.0-stroke]
         other_params_ = tf.reshape(tf.concat(other_params_list, axis=1), [-1, 6])  # (N * max_seq_len, 6)
         pen_ras_ = tf.reshape(tf.concat(pen_ras_list, axis=1), [-1, 2])  # (N * max_seq_len, 2)
         pos_before_max_min_ = tf.concat(pos_before_max_min_list, axis=1)  # (N, max_seq_len, 2)
@@ -1007,6 +1040,7 @@ class VirtualSketchingModel(object):
         :param input_pen: (N, n_class)
         :return: pen_state: (N, 1)
         """
+
         def sign_onehot(x):
             """
             :param x: (N, n_class)
@@ -1025,7 +1059,7 @@ class VirtualSketchingModel(object):
             x_range = tf.cumsum(tf.ones_like(x), axis=1)  # (N, 2)
             return tf.reduce_sum(input_tensor=tf.nn.softmax(x * beta) * x_range, axis=1) - 1
 
-        ## Better to use softargmax(beta=1e2). The sign_onehot's gradient is close to zero.
+        # Better to use softargmax(beta=1e2). The sign_onehot's gradient is close to zero.
         # pen_onehot = sign_onehot(input_pen)  # one-hot form, (N * max_seq_len, 2)
         # pen_state = pen_onehot[:, 1:2]  # (N * max_seq_len, 1)
         pen_state = softargmax(input_pen, soft_beta)
@@ -1060,10 +1094,12 @@ class VirtualSketchingModel(object):
                 for perc_layer in self.hps['perc_loss_layers']:
                     if perc_loss_type == 'l1':
                         perc_layer_loss = tf.reduce_mean(input_tensor=tf.abs(tf.subtract(return_map_pred[perc_layer],
-                                                                            return_map_gt[perc_layer])))  # ()
+                                                                                         return_map_gt[
+                                                                                             perc_layer])))  # ()
                     elif perc_loss_type == 'mse':
                         perc_layer_loss = tf.reduce_mean(input_tensor=tf.pow(tf.subtract(return_map_pred[perc_layer],
-                                                                            return_map_gt[perc_layer]), 2))  # ()
+                                                                                         return_map_gt[perc_layer]),
+                                                                             2))  # ()
                     else:
                         raise NameError('Unknown perceptual loss type:', perc_loss_type)
                     perc_layer_losses_raw.append(perc_layer_loss)
@@ -1075,7 +1111,9 @@ class VirtualSketchingModel(object):
                     perc_relu_loss_raw = perc_layer_losses_raw[loop_i]  # ()
 
                     if self.hps['model_mode'] == 'train':
-                        curr_relu_mean = (self.perc_loss_mean_list[loop_i] * self.last_step_num + perc_relu_loss_raw) / (self.last_step_num + 1.0)
+                        curr_relu_mean = (self.perc_loss_mean_list[
+                                              loop_i] * self.last_step_num + perc_relu_loss_raw) / (
+                                                 self.last_step_num + 1.0)
                         relu_cost_norm = perc_relu_loss_raw / curr_relu_mean
                     else:
                         relu_cost_norm = perc_relu_loss_raw
@@ -1120,96 +1158,49 @@ class VirtualSketchingModel(object):
             stroke_num_loss_pre = tf.reduce_mean(input_tensor=ending_state)  # larger is better, [0.0, 1.0]
             stroke_num_loss = 1 - stroke_num_loss_pre  # lower is better, [0.0, 1.0]
             return stroke_num_loss
-            '''
-            ending_state = input_strokes[:, 1:, 0]  # (N-1, seq_len)
-            prev_state = 1 - input_strokes[:, :-1, 0]
-            rst = ending_state * prev_state
-            stroke_num_loss = tf.reduce_mean(rst)
-            return stroke_num_loss
-            '''
 
         stroke_num_cost = get_stroke_num_loss(pred_params)  # lower is better
 
         def get_smoothness_loss(input_strokes):
 
-
-
             a = input_strokes[:, :, 3:5]  # (N, seq_len, 2)  this is (x2,y2) vector
             b = tf.subtract(1., input_strokes[:, :, 0])  # (N, seq_len), this is 1 - p_t vector 1:drawing
 
-            a1 = a[:, :-1, :]  ##start to make temporal difference
+            a1 = a[:, :-1, :]  # start to make temporal difference
             a2 = a[:, 1:, :]
-            mult = tf.reduce_sum(input_tensor=tf.multiply(a1, a2), axis=-1)  # pointwise multiply of the adjacent vectors # (N, seq_len-1) 
-            norm1 = tf.sqrt(tf.reduce_sum(input_tensor=tf.square(a1), axis=2))  # compute the norms and pointwise multiply them
+            mult = tf.reduce_sum(input_tensor=tf.multiply(a1, a2),
+                                 axis=-1)  # pointwise multiply of the adjacent vectors # (N, seq_len-1)
+            norm1 = tf.sqrt(
+                tf.reduce_sum(input_tensor=tf.square(a1), axis=2))  # compute the norms and pointwise multiply them
             norm2 = tf.sqrt(tf.reduce_sum(input_tensor=tf.square(a2), axis=2))
             norm = tf.multiply(norm1, norm2)
-            cos_sim = tf.divide(mult, norm)  ##final cosine-similarity
-            ## we shall compute the mask for the p_t = 0 vectors are not included in the computation
-            #mask = tf.cast(tf.cast((b[:, :-1] + b[:, 1:]) / 2, dtype=tf.uint8),
-            #               dtype=tf.float32)  ####data type may be wrong!! check here
+            cos_sim = tf.divide(mult, norm)  # final cosine-similarity
             rst = tf.multiply(b[:, :-1], cos_sim)
             rst = tf.multiply(b[:, 1:], rst)
             rst = tf.gather_nd(rst, tf.compat.v1.where(rst))
-            final = tf.reduce_mean(input_tensor=rst)  ## biggeer the better (more smooth) [-1,1]
+            final = tf.reduce_mean(input_tensor=rst)  # biggeer the better (more smooth) [-1,1]
 
             return 1 - final
 
-        """def get_smoothness_loss(input_strokes):
-
-            a = input_strokes[:, :, 3:5]  # (N, seq_len, 2)  this is (x2,y2) vector
-            b = tf.subtract(1., input_strokes[:, :, 0])  # (N, seq_len), this is 1 - p_t vector 1:drawing
-
-            a1 = a[:, :-1, :]  ##start to make temporal difference
-            a2 = a[:, 1:, :]
-            mult = tf.reduce_sum(tf.multiply(a1, a2), axis=-1)  # pointwise multiply of the adjacent vectors
-            cos_sim = tf.multiply(mult, win_size_before_max_min[:, 1:, 0])
-            cos_sim = tf.multiply(cos_sim, win_size_before_max_min[:, :-1, 0])
-            cos_sim = tf.divide(cos_sim, tf.cast(image_size, tf.float32))
-            cos_sim = tf.divide(cos_sim, tf.cast(image_size, tf.float32))
-            rst = tf.multiply(b[:, :-1], cos_sim)
-            rst = tf.multiply(b[:, 1:], rst)
-            rst = tf.gather_nd(rst, tf.where(rst))
-            final = tf.reduce_mean(rst)  ## biggeer the better (more smooth) [-1,1]
-
-            return 1 - 20 * final"""
-
-
         def get_angle_loss(input_strokes):
             a = input_strokes[:, 1:, 3:5]
-            b = 1 - input_strokes[:, 1:, 0] # 1.0-stroke
+            b = 1 - input_strokes[:, 1:, 0]  # 1.0-stroke
             b1 = input_strokes[:, :-1, 0]  # 0.0-stroke
             x = tf.zeros_like(a)
-            a1 =tf.add(x, [-1,-1])
-            mul=tf.reduce_sum(input_tensor=tf.multiply(a,a1),axis=-1)
-            norm1 = tf.sqrt(tf.reduce_sum(input_tensor=tf.square(a1), axis=2))  # compute the norms and pointwise multiply them
+            a1 = tf.add(x, [-1, -1])
+            mul = tf.reduce_sum(input_tensor=tf.multiply(a, a1), axis=-1)
+            norm1 = tf.sqrt(
+                tf.reduce_sum(input_tensor=tf.square(a1), axis=2))  # compute the norms and pointwise multiply them
             norm2 = tf.sqrt(tf.reduce_sum(input_tensor=tf.square(a), axis=2))
             norm = tf.multiply(norm1, norm2)
             cos_sim = tf.divide(mul, norm)
-            rst = cos_sim*b
-            rst = rst*b1
+            rst = cos_sim * b
+            rst = rst * b1
             a2 = tf.zeros_like(rst)
             rst = tf.compat.v1.where((rst > 0.5), rst, a2)
             final = tf.reduce_mean(input_tensor=rst)
 
             return final * 10
-
-        """def get_angle_loss(input_strokes):
-            a = input_strokes[:, :, 3:5]
-            b = 1 - input_strokes[:, :, 0]  # 1.0-stroke
-            x = tf.zeros_like(a)
-            a1 = tf.add(x, [-1, -1])
-            mul = tf.reduce_sum(tf.multiply(a, a1), axis=-1)
-            norm1 = tf.sqrt(tf.reduce_sum(tf.square(a1), axis=2))  # compute the norms and pointwise multiply them
-            norm2 = tf.sqrt(tf.reduce_sum(tf.square(a), axis=2))
-            norm = tf.multiply(norm1, norm2)
-            cos_sim = tf.divide(mul, norm)
-            rst = cos_sim * b
-
-            a2 = tf.zeros_like(rst)
-            rst = tf.where((rst > 0.5), rst, a2)
-            final = tf.reduce_mean(rst)
-
-            return final * 10"""
 
         smoothness_cost = get_smoothness_loss(pred_params)
 
@@ -1217,7 +1208,8 @@ class VirtualSketchingModel(object):
 
         def get_pos_outside_loss(pos_before_max_min_):
             pos_after_max_min = tf.maximum(pos_before_max_min_, 0.0)
-            pos_after_max_min = tf.minimum(pos_after_max_min, tf.cast(image_size - 1, tf.float32))  # (N, max_seq_len, 2)
+            pos_after_max_min = tf.minimum(pos_after_max_min,
+                                           tf.cast(image_size - 1, tf.float32))  # (N, max_seq_len, 2)
             pos_outside_loss = tf.reduce_mean(input_tensor=tf.abs(pos_before_max_min_ - pos_after_max_min))
             return pos_outside_loss
 
@@ -1230,34 +1222,38 @@ class VirtualSketchingModel(object):
             win_size_outside_bottom_loss = tf.divide(
                 tf.maximum(tf.cast(min_window_size, tf.float32) - win_size_before_max_min_, 0.0),
                 tf.cast(min_window_size, tf.float32))  # (N, max_seq_len, 1)
-            win_size_outside_loss = tf.reduce_mean(input_tensor=win_size_outside_top_loss + win_size_outside_bottom_loss)
+            win_size_outside_loss = tf.reduce_mean(
+                input_tensor=win_size_outside_top_loss + win_size_outside_bottom_loss)
             return win_size_outside_loss
 
-        win_size_outside_cost = get_win_size_outside_loss(win_size_before_max_min, self.hps['min_window_size'])  # lower is better
+        win_size_outside_cost = get_win_size_outside_loss(win_size_before_max_min,
+                                                          self.hps['min_window_size'])  # lower is better
 
         def get_early_pen_states_loss(input_strokes, curr_start, curr_end):
             # input_strokes: (N, max_seq_len, 7)
             pred_early_pen_states = input_strokes[:, curr_start:curr_end, 0]  # (N, curr_early_len)
-            pred_early_pen_states_min = tf.reduce_min(input_tensor=pred_early_pen_states, axis=1)  # (N), should not be 1
+            pred_early_pen_states_min = tf.reduce_min(input_tensor=pred_early_pen_states,
+                                                      axis=1)  # (N), should not be 1
             early_pen_states_loss = tf.reduce_mean(input_tensor=pred_early_pen_states_min)  # lower is better
             return early_pen_states_loss
 
         early_pen_states_cost = get_early_pen_states_loss(pred_params,
                                                           self.early_pen_loss_start_idx, self.early_pen_loss_end_idx)
 
-        return raster_cost, stroke_num_cost, smoothness_cost,angle_cost,pos_outside_cost, win_size_outside_cost, \
+        return raster_cost, stroke_num_cost, smoothness_cost, angle_cost, pos_outside_cost, win_size_outside_cost, \
                early_pen_states_cost, \
                perc_relu_losses_raw, perc_relu_losses_norm
 
-    def build_training_op_split(self, raster_cost, sn_cost, sm_cost, angle_cost, cursor_outside_cost, win_size_outside_cost,
+    def build_training_op_split(self, raster_cost, sn_cost, sm_cost, angle_cost, cursor_outside_cost,
+                                win_size_outside_cost,
                                 early_pen_states_cost):
         total_cost = self.hps['raster_loss_weight'] * raster_cost + \
-                self.hps['early_pen_loss_weight'] * early_pen_states_cost + \
-                self.stroke_num_loss_weight * sn_cost + \
-                self.hps['smoothness_loss_weight'] * self.stroke_num_loss_weight * sm_cost +\
-                self.hps['angle_loss_weight'] * self.stroke_num_loss_weight * angle_cost + \
-                self.hps['outside_loss_weight'] * cursor_outside_cost + \
-                self.hps['win_size_outside_loss_weight'] * win_size_outside_cost
+                     self.hps['early_pen_loss_weight'] * early_pen_states_cost + \
+                     self.stroke_num_loss_weight * sn_cost + \
+                     self.hps['smoothness_loss_weight'] * self.stroke_num_loss_weight * sm_cost + \
+                     self.hps['angle_loss_weight'] * self.stroke_num_loss_weight * angle_cost + \
+                     self.hps['outside_loss_weight'] * cursor_outside_cost + \
+                     self.hps['win_size_outside_loss_weight'] * win_size_outside_cost
 
         tvars = [var for var in tf.compat.v1.trainable_variables()
                  if 'raster_unit' not in var.op.name and 'VGG16' not in var.op.name]

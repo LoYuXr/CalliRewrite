@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 def get_initializer(init_method):
     if init_method == 'xavier_normal':
         initializer = tf.compat.v1.glorot_normal_initializer()
@@ -39,9 +40,10 @@ def batchnorm(input, name='batch_norm', init_method=None):
         input = tf.identity(input)
 
         channels = input.get_shape()[3]
-        offset = tf.compat.v1.get_variable("offset", [channels], dtype=tf.float32, initializer=tf.compat.v1.zeros_initializer())
+        offset = tf.compat.v1.get_variable("offset", [channels], dtype=tf.float32,
+                                           initializer=tf.compat.v1.zeros_initializer())
         scale = tf.compat.v1.get_variable("scale", [channels], dtype=tf.float32,
-                                initializer=initializer)
+                                          initializer=initializer)
         mean, variance = tf.nn.moments(x=input, axes=[0, 1, 2], keepdims=False)
         variance_epsilon = 1e-5
         normalized = tf.nn.batch_normalization(input, mean, variance, offset, scale, variance_epsilon=variance_epsilon)
@@ -56,9 +58,10 @@ def layernorm(input, name='layer_norm', init_method=None):
 
     with tf.compat.v1.variable_scope(name):
         n_neurons = input.get_shape()[3]
-        offset = tf.compat.v1.get_variable("offset", [n_neurons], dtype=tf.float32, initializer=tf.compat.v1.zeros_initializer())
+        offset = tf.compat.v1.get_variable("offset", [n_neurons], dtype=tf.float32,
+                                           initializer=tf.compat.v1.zeros_initializer())
         scale = tf.compat.v1.get_variable("scale", [n_neurons], dtype=tf.float32,
-                                initializer=initializer)
+                                          initializer=initializer)
         offset = tf.reshape(offset, [1, 1, -1])
         scale = tf.reshape(scale, [1, 1, -1])
         mean, variance = tf.nn.moments(x=input, axes=[1, 2, 3], keepdims=True)
@@ -92,7 +95,8 @@ def linear1d(inputlin, inputdim, outputdim, name="linear1d", init_method=None):
 
     with tf.compat.v1.variable_scope(name) as scope:
         weight = tf.compat.v1.get_variable("weight", [inputdim, outputdim], initializer=initializer)
-        bias = tf.compat.v1.get_variable("bias", [outputdim], dtype=tf.float32, initializer=tf.compat.v1.constant_initializer(0.0))
+        bias = tf.compat.v1.get_variable("bias", [outputdim], dtype=tf.float32,
+                                         initializer=tf.compat.v1.constant_initializer(0.0))
         return tf.matmul(inputlin, weight) + bias
 
 
@@ -131,7 +135,7 @@ def general_conv2d(inputconv, output_dim=64, filter_height=4, filter_width=4, st
                 #                                        scope='instance_norm')
             elif norm_type == 'batch_norm':
                 # conv = batchnorm(conv, init_method=init_method)
-                conv = tf.keras.layers.BatchNormalization(momentum=0.9,epsilon=1e-5, center=True,
+                conv = tf.keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5, center=True,
                                                           scale=True)(conv, training=is_training)
             elif norm_type == 'layer_norm':
                 # conv = layernorm(conv, init_method=init_method)
@@ -220,7 +224,8 @@ def generative_cnn_c3_encoder_deeper(inputs, is_training=True, drop_keep_prob=0.
         return tensor_x, tensor_x_sp
 
 
-def generative_cnn_c3_encoder_combine33(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5, init_method=None):
+def generative_cnn_c3_encoder_combine33(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5,
+                                        init_method=None):
     local_x = local_inputs
     global_x = global_inputs
 
@@ -287,7 +292,8 @@ def generative_cnn_c3_encoder_combine33(local_inputs, global_inputs, is_training
         return tensor_x, tensor_x_sp
 
 
-def generative_cnn_c3_encoder_combine43(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5, init_method=None):
+def generative_cnn_c3_encoder_combine43(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5,
+                                        init_method=None):
     local_x = local_inputs
     global_x = global_inputs
 
@@ -361,7 +367,8 @@ def generative_cnn_c3_encoder_combine43(local_inputs, global_inputs, is_training
         return tensor_x, tensor_x_sp
 
 
-def generative_cnn_c3_encoder_combine53(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5, init_method=None):
+def generative_cnn_c3_encoder_combine53(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5,
+                                        init_method=None):
     local_x = local_inputs
     global_x = global_inputs
 
@@ -442,7 +449,8 @@ def generative_cnn_c3_encoder_combine53(local_inputs, global_inputs, is_training
         return tensor_x, tensor_x_sp
 
 
-def generative_cnn_c3_encoder_combineFC(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5, init_method=None):
+def generative_cnn_c3_encoder_combineFC(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5,
+                                        init_method=None):
     local_x = local_inputs
     global_x = global_inputs
 
@@ -630,7 +638,7 @@ def generative_cnn_c3_encoder_combineFC_jointAttn(local_inputs, global_inputs, i
 
 
 def generative_cnn_c3_encoder_combineFC_sepAttn(local_inputs, global_inputs, is_training=True, drop_keep_prob=0.5,
-                                                  init_method=None, combine_manner='attn'):
+                                                init_method=None, combine_manner='attn'):
     local_x = local_inputs
     global_x = global_inputs
 
@@ -794,7 +802,6 @@ def generative_cnn_c3_encoder_deeper13_1(inputs, is_training=True, drop_keep_pro
     tensor_x = inputs
 
     with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope(), reuse=tf.compat.v1.AUTO_REUSE) as scope:
-
         tensor_x = general_conv2d(tensor_x, 8, filter_height=3, filter_width=3, stride_height=1, stride_width=1,
                                   is_training=is_training, name="CNN_ENC_0", init_method=init_method)
 
@@ -995,11 +1002,11 @@ def generative_cnn_encoder_deeper13(inputs, is_training=True, drop_keep_prob=0.5
         return tensor_x, tensor_x_sp
 
 
-def max_pooling(x) :
+def max_pooling(x):
     return tf.compat.v1.layers.max_pooling2d(x, pool_size=2, strides=2, padding='SAME')
 
 
-def hw_flatten(x) :
+def hw_flatten(x):
     return tf.reshape(x, shape=[x.shape[0], -1, x.shape[-1]])
 
 

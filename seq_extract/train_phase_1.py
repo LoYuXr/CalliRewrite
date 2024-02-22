@@ -255,7 +255,7 @@ def train(sess, train_model, train_set, val_set, sub_log_root, sub_snapshot_root
             start = time.time()
 
         # if should_save_log_img(step) and step > 0:
-            # save_log_images(sess, eval_sample_model, val_set, sub_log_img_root, step)
+        # save_log_images(sess, eval_sample_model, val_set, sub_log_img_root, step)
 
         if step % hps['save_every'] == 0 and step > 0:
             save_model(sess, saver, sub_snapshot_root, step)

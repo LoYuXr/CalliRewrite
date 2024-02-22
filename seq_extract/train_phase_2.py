@@ -109,7 +109,7 @@ def train(sess, train_model, train_set, val_set, sub_log_root, sub_snapshot_root
                           if 'raster_unit' not in var.op.name and 'VGG16' not in var.op.name]
     saver = tf.compat.v1.train.Saver(var_list=snapshot_save_vars, max_to_keep=20)
 
-    #saver.restore(sess, model_checkpoint_path)
+    # saver.restore(sess, model_checkpoint_path)
 
     start_step = 1
     print('start_step', start_step)
@@ -126,7 +126,8 @@ def train(sess, train_model, train_set, val_set, sub_log_root, sub_snapshot_root
         if hps['sn_loss_type'] == 'decreasing':
             assert hps['decrease_stop_steps'] <= hps['num_steps']
             assert hps['stroke_num_loss_weight_end'] <= hps['stroke_num_loss_weight']
-            curr_sn_k = (hps['stroke_num_loss_weight'] - hps['stroke_num_loss_weight_end']) / float(hps['decrease_stop_steps'])
+            curr_sn_k = (hps['stroke_num_loss_weight'] - hps['stroke_num_loss_weight_end']) / float(
+                hps['decrease_stop_steps'])
             curr_stroke_num_loss_weight = hps['stroke_num_loss_weight'] - count_step * curr_sn_k
             curr_stroke_num_loss_weight = max(curr_stroke_num_loss_weight, hps['stroke_num_loss_weight_end'])
         elif hps['sn_loss_type'] == 'fixed':
@@ -167,14 +168,14 @@ def train(sess, train_model, train_set, val_set, sub_log_root, sub_snapshot_root
                                           random_cursor=hps['random_cursor'],
                                           photo_prob=curr_photo_prob,
                                           interpolate_type=interpolate_type)
-        
+
         # input_photos: list of (N, image_size, image_size), [0-stroke, 1-BG]
         # target_sketches: list of (N, image_size, image_size), [0-stroke, 1-BG]
         # init_cursors: list of (N, 1, 2), in size [0.0, 1.0)
 
         init_cursors_input = np.concatenate(init_cursors, axis=0)
         image_size_input = np.stack(image_sizes, axis=0)
-        
+
         feed = {
             train_model.init_cursor: init_cursors_input,
             train_model.image_size: image_size_input,
@@ -194,7 +195,7 @@ def train(sess, train_model, train_set, val_set, sub_log_root, sub_snapshot_root
             if input_photos is not None:
                 input_photo_val = np.expand_dims(input_photos[loop_i], axis=-1)
             feed[train_model.input_photo_list[loop_i]] = input_photo_val
-            
+
         (train_cost, raster_cost, perc_relu_costs_raw, perc_relu_costs_norm,
          stroke_num_cost, sm_cost, angle_cost, early_pen_states_cost,
          pos_outside_cost, win_size_outside_cost,
@@ -207,7 +208,7 @@ def train(sess, train_model, train_set, val_set, sub_log_root, sub_snapshot_root
             train_model.early_pen_states_cost,
             train_model.pos_outside_cost, train_model.win_size_outside_cost,
             train_model.global_step
-         ], feed)
+        ], feed)
 
         # update mean_raster_loss
         for layer_i in range(len(hps['perc_loss_layers'])):
@@ -226,7 +227,7 @@ def train(sess, train_model, train_set, val_set, sub_log_root, sub_snapshot_root
                 'Train_Cost': train_cost,
                 'Train_raster_Cost': raster_cost,
                 'Train_stroke_num_Cost': stroke_num_cost,
-                'Train_smoothness_Cost':sm_cost,
+                'Train_smoothness_Cost': sm_cost,
                 'Train_angle_Cost': angle_cost,
                 'Train_early_pen_states_cost': early_pen_states_cost,
                 'Train_pos_outside_Cost': pos_outside_cost,
@@ -262,7 +263,7 @@ def train(sess, train_model, train_set, val_set, sub_log_root, sub_snapshot_root
             start = time.time()
 
         # if should_save_log_img(step) and step > 0:
-            # save_log_images(sess, eval_sample_model, val_set, sub_log_img_root, step)
+        # save_log_images(sess, eval_sample_model, val_set, sub_log_img_root, step)
 
         if step % hps['save_every'] == 0 and step >= 0:
             save_model(sess, saver, sub_snapshot_root, step)
@@ -281,7 +282,7 @@ def trainer(model_params):
 
     sub_snapshot_root = os.path.join(FLAGS.snapshot_root, model_params['program_name'])
     sub_log_root = os.path.join(FLAGS.log_root, model_params['program_name'])
-    sub_log_img_root = os.path.join(FLAGS.log_img_root,  model_params['program_name'])
+    sub_log_img_root = os.path.join(FLAGS.log_img_root, model_params['program_name'])
 
     train_set = datasets[0]
     val_set = datasets[1]
@@ -339,7 +340,7 @@ def trainer(model_params):
     with tf.io.gfile.GFile(os.path.join(sub_snapshot_root, 'model_config.json'), 'w') as f:
         json.dump(train_model_params, f, indent=True)
 
-    train(sess, train_model,  train_set, val_set,
+    train(sess, train_model, train_set, val_set,
           sub_log_root, sub_snapshot_root, sub_log_img_root)
 
 

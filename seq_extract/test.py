@@ -17,9 +17,8 @@ if __name__ == '__main__':
     print(args.input)
     for filename in os.listdir(args.input):
         if 'png' in filename:
-            main(args.model, args.input+'/'+filename, args.sample)
+            main(args.model, args.input + '/' + filename, args.sample)
     end_time_point = time.time()
-    print(end_time_point-start_time_point)
+    print(end_time_point - start_time_point)
 
-
-    #main(args.model, args.input, args.sample)K,
+    # main(args.model, args.input, args.sample)K,

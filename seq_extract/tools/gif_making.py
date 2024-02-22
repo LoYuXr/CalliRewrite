@@ -32,7 +32,8 @@ def add_scaling_visualization(canvas_images, cursor, window_size, image_size):
     canvas_imgs = 255 - np.round(canvas_images * 255.0).astype(np.uint8)
 
     # add cursor visualization
-    canvas_imgs[:, cursor_y - cursor_width: cursor_y + cursor_width, cursor_x - cursor_width: cursor_x + cursor_width, :] = vis_color
+    canvas_imgs[:, cursor_y - cursor_width: cursor_y + cursor_width, cursor_x - cursor_width: cursor_x + cursor_width,
+    :] = vis_color
     return canvas_imgs
 
     # add box visualization
@@ -65,7 +66,7 @@ def make_gif(sess, path, pasting_func, data, init_cursor, image_size, infer_leng
     """
     canvas = np.zeros((image_size, image_size), dtype=np.float32)  # [0.0-BG, 1.0-stroke]
     gif_frames = []
-    cnt=0
+    cnt = 0
 
     cursor_idx = 0
 
@@ -75,11 +76,11 @@ def make_gif(sess, path, pasting_func, data, init_cursor, image_size, infer_leng
     prev_array = prev_array * 255
     all = np.ones((image_size, image_size))
     all = all * 255
-    result=np.zeros((image_size,image_size))
-    results=np.zeros((image_size,image_size))
+    result = np.zeros((image_size, image_size))
+    results = np.zeros((image_size, image_size))
 
     for round_idx in range(len(infer_lengths)):
-        #print('Making progress', round_idx + 1, '/', len(infer_lengths))
+        # print('Making progress', round_idx + 1, '/', len(infer_lengths))
 
         round_length = infer_lengths[round_idx]
 
@@ -90,20 +91,17 @@ def make_gif(sess, path, pasting_func, data, init_cursor, image_size, infer_leng
         prev_scaling = 1.0
         prev_window_size = float(raster_size)  # (1)
 
-
-        prev_num=0
-        # 开始作画
+        prev_num = 0
         flag = 0
         for round_inner_i in range(round_length):
 
             flag += 1
-            stroke_idx = np.sum(infer_lengths[:round_idx]).astype(np.int32) + round_inner_i #第几个笔画
+            stroke_idx = np.sum(infer_lengths[:round_idx]).astype(np.int32) + round_inner_i  # 第几个笔画
 
             curr_window_size_raw = prev_scaling * prev_window_size
             curr_window_size_raw = np.maximum(curr_window_size_raw, min_window_size)
             curr_window_size_raw = np.minimum(curr_window_size_raw, image_size)
             curr_window_size = int(round(curr_window_size_raw))  # ()现在的窗口大小
-            # print(curr_window_size)
 
             pen_state = data[stroke_idx, 0]
 
@@ -115,7 +113,6 @@ def make_gif(sess, path, pasting_func, data, init_cursor, image_size, infer_leng
             x2y2 = np.divide(np.add(x2y2, 1.0), 2.0)  # (2), [0.0, 1.0]
             widths = np.stack([prev_width, width2], axis=0)  # (2) r0 r2
             stroke_params_proc = np.concatenate([x0y0, x1y1, x2y2, widths], axis=-1)  # (8)
-            #print(stroke_params_proc)
 
             next_width = stroke_params[4]
             next_scaling = stroke_params[5]
@@ -123,45 +120,29 @@ def make_gif(sess, path, pasting_func, data, init_cursor, image_size, infer_leng
             next_window_size = np.maximum(next_window_size, min_window_size)
             next_window_size = np.minimum(next_window_size, image_size)
 
-            #print(res)
-
-
-
             prev_width = next_width * curr_window_size_raw / next_window_size
             prev_scaling = next_scaling
             prev_window_size = curr_window_size_raw
-            #print(curr_window_size_raw)
 
             f = stroke_params_proc.tolist()  # (8)
             f += [1.0, 1.0]
-            save1_path = save_base+'%s_sum/%d.png'
-            #print('save_base',save_base)
-            #print('save1_path',save1_path)
+            save1_path = save_base + '%s_sum/%d.png'
+            # print('save_base',save_base)
+            # print('save1_path',save1_path)
             if 1:
-                cnt+=1
+                cnt += 1
                 gt_stroke_img = utils.draw(f)  # (H, W), [0.0-stroke, 1.0-BG]
-                #print(gt_stroke_img.shape)
 
                 gt_stroke_img_large = utils.image_pasting_v3_testing(1.0 - gt_stroke_img, cursor_pos,
-                                                               image_size,
-                                                               curr_window_size_raw,
-                                                               pasting_func, sess)  # [0.0-BG, 1.0-stroke]
+                                                                     image_size,
+                                                                     curr_window_size_raw,
+                                                                     pasting_func, sess)  # [0.0-BG, 1.0-stroke]
 
                 if pen_state == 0:
                     canvas += gt_stroke_img_large  # [0.0-BG, 1.0-stroke]
                 if pen_state == 0:
-                    #print(cnt)
                     result += gt_stroke_img_large
-                    #x = np.clip(result,0.0,1.0)
-                    #print(np.max(x))
-                    #result1 = x * 0.5 + gt_stroke_img_large
-
-                    #os.makedirs(os.path.dirname(save_path % (path, cnt)), exist_ok=True)
-                    #print('rst',os.path.dirname(save1_path % (path, cnt)))
-                    #print('path:', path)
-                    #print('cnt:',cnt)
                     os.makedirs(os.path.dirname(save1_path % (path, cnt)), exist_ok=True)
-                    #cv.imwrite(save_path % (path, cnt), all - gt_stroke_img_large * 255)
                     cv.imwrite(save1_path % (path, cnt), all - result * 255)
 
                 canvas_rgb = np.stack([np.clip(canvas, 0.0, 1.0) for _ in range(3)], axis=-1)
@@ -177,26 +158,8 @@ def make_gif(sess, path, pasting_func, data, init_cursor, image_size, infer_leng
                     canvas_vis = canvas_rgb
 
                 canvas_vis_png = Image.fromarray(canvas_vis, 'RGB')
-                #if np.sum(result) > 5000:
-                    #cv.imwrite('%d.png' % (cnt), xxxx - result * 255)
-                    #if cnt<30:
-                    #results += result
-                    #result = np.zeros((256, 256))
-                #if pen_state == 1:
-                   #if cnt-prev_num > 1:
-                       #prev_num = cnt
-                        #results += result
-                       # print(np.sum(result))
-                        #if np.sum(result)>5000:
-                       #cv.imwrite('../4/%d.png'%(cnt), xxxx-result*255)
-                       #result=np.zeros((image_size,image_size))
-
-                       # prev_array = canvas_vis
-                   #else:
-                       #prev_num = cnt
                 if pen_state == 0:
                     gif_frames.append(canvas_vis_png)
-
 
             # update cursor_pos based on hps.cursor_type
             new_cursor_offsets = stroke_params[2:4] * (float(curr_window_size_raw) / 2.0)  # (1, 6), patch-level
@@ -217,15 +180,11 @@ def make_gif(sess, path, pasting_func, data, init_cursor, image_size, infer_leng
             cursor_pos_large = np.minimum(np.maximum(cursor_pos_large, 0.0), float(image_size - 1))  # (2), large-level
             cursor_pos = cursor_pos_large / float(image_size)
 
-    #cv.imwrite('final.png' , xxxx - result * 255)
-    #results += result
     print('Saving to GIF ...')
-    #cv.imwrite('result.png', xxxx-results*255)
-    #print(cnt)
-    save2_path = save_base+'%s_sum/dynamic.gif'
-    save_path = os.path.join(save_base, 'dynamic.gif')
+
+    save_path = save_base + '%s_sum/dynamic.gif'
     first_frame = gif_frames[0]
-    first_frame.save(save2_path % (path), save_all=True, append_images=gif_frames, loop=0, duration=1)
+    first_frame.save(save_path % (path), save_all=True, append_images=gif_frames, loop=0, duration=1)
 
 
 def gif_making(npz_path):
@@ -252,7 +211,6 @@ def gif_making(npz_path):
     tfconfig.gpu_options.allow_growth = True
     sess = tf.compat.v1.InteractiveSession(config=tfconfig)
     sess.run(tf.compat.v1.global_variables_initializer())
-    #print(npz_path)
 
     data = np.load(npz_path, encoding='latin1', allow_pickle=True)
     strokes_data = data['strokes_data']

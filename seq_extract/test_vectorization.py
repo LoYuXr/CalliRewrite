@@ -28,6 +28,7 @@ def move_cursor_to_undrawn(current_canvas_list, input_image_, last_min_acc_list,
     :param input_image_: (1, image_size, image_size), [0-stroke, 1-BG]
     :return: new_cursor_pos: (select_times, 1, 2), [0.0, 1.0)
     """
+
     def split_images(in_img, image_size, grid_size):
         if image_size % grid_size == 0:
             paddings_ = 0
@@ -92,7 +93,7 @@ def move_cursor_to_undrawn(current_canvas_list, input_image_, last_min_acc_list,
 
         cursor_y = random.randint(y_top, y_bottom)
         cursor_x = random.randint(x_left, x_right)
-        #print(cursor_x,cursor_y)
+        # print(cursor_x,cursor_y)
 
         cursor_y = max(0, min(cursor_y, img_size - 1))
         cursor_x = max(0, min(cursor_x, img_size - 1))  # (2), in large size
@@ -103,7 +104,8 @@ def move_cursor_to_undrawn(current_canvas_list, input_image_, last_min_acc_list,
     input_image = 1.0 - input_image_[0]  # (image_size, image_size), [0-BG, 1-stroke]
     img_size = input_image.shape[0]
 
-    input_image_patches, split_number = split_images(input_image, img_size, grid_patch_size)  # (N, grid_size, grid_size)
+    input_image_patches, split_number = split_images(input_image, img_size,
+                                                     grid_patch_size)  # (N, grid_size, grid_size)
 
     new_cursor_pos = []
     last_min_acc_list_new = [item for item in last_min_acc_list]
@@ -115,7 +117,7 @@ def move_cursor_to_undrawn(current_canvas_list, input_image_, last_min_acc_list,
         # 1. detect ending flag by stroke accuracy
         stroke_accuracy = cal_stroke_acc(curr_canvas_patches, input_image_patches)
         min_acc_idx = np.argmin(stroke_accuracy)
-        min_acc= stroke_accuracy[min_acc_idx]
+        min_acc = stroke_accuracy[min_acc_idx]
         # print('min_acc_idx', min_acc_idx, ' | ', 'min_acc', min_acc)
 
         if min_acc >= stroke_acc_threshold:  # end of drawing
@@ -182,14 +184,15 @@ def get_raster_loss(pred_imgs, gt_imgs, loss_type, image_size):
                         'ReLU5_1': 1.0, 'ReLU5_2': 1.0, 'ReLU5_3': 1.0}
         perc_loss_layers = ['ReLU1_1', 'ReLU1_2'],
 
-
         for perc_layer in perc_loss_layers:
             for i in range(2):
                 if perc_loss_type == 'l1':
-                    perc_layer_loss = tf.reduce_mean(input_tensor=tf.abs(tf.subtract(return_map_pred[perc_layer[i]],return_map_gt[perc_layer[i]])))  # ()
+                    perc_layer_loss = tf.reduce_mean(input_tensor=tf.abs(
+                        tf.subtract(return_map_pred[perc_layer[i]], return_map_gt[perc_layer[i]])))  # ()
                 elif perc_loss_type == 'mse':
                     perc_layer_loss = tf.reduce_mean(input_tensor=tf.pow(tf.subtract(return_map_pred[perc_layer],
-                                                                        return_map_gt[perc_layer]), 2))  # ()
+                                                                                     return_map_gt[perc_layer]),
+                                                                         2))  # ()
                 else:
                     raise NameError('Unknown perceptual loss type:', perc_loss_type)
                 perc_layer_losses_raw.append(perc_layer_loss)
@@ -197,7 +200,7 @@ def get_raster_loss(pred_imgs, gt_imgs, loss_type, image_size):
                 perc_layer_losses_weighted.append(perc_layer_loss * weighted_map[perc_layer[i]])
 
         ras_cost = tf.reduce_mean(input_tensor=perc_layer_losses_weighted)
-        ras_cost=ras_cost.eval()
+        ras_cost = ras_cost.eval()
 
     return ras_cost
 
@@ -206,7 +209,7 @@ def sample(sess, model, input_photos, init_cursor, image_size, init_len, seq_len
            pasting_func, round_stop_state_num, stroke_acc_threshold):
     """Samples a sequence from a pre-trained model."""
     select_times = 1
-    cursor_list=[]
+    cursor_list = []
     curr_canvas = np.zeros(dtype=np.float32,
                            shape=(select_times, image_size, image_size))  # [0.0-BG, 1.0-stroke]
 
@@ -238,7 +241,7 @@ def sample(sess, model, input_photos, init_cursor, image_size, init_len, seq_len
     tar_num = 0
 
     y = 0
-    x = np.sum(1-input_photos[0])
+    x = np.sum(1 - input_photos[0])
 
     for cursor_i, seq_len in enumerate(seq_lens):
         # print('\n')
@@ -265,10 +268,10 @@ def sample(sess, model, input_photos, init_cursor, image_size, init_len, seq_len
 
         continuous_one_state_num = 0
         for i in range(seq_len):
-            rst1 = np.sum(np.abs(1-curr_canvas[0]-input_photos[0]))
+            rst1 = np.sum(np.abs(1 - curr_canvas[0] - input_photos[0]))
             rst2 = np.sum(-1 + curr_canvas[0] + input_photos[0])
             rst = 1 * rst1 + 0 * rst2
-            rst += x * y /120
+            rst += x * y / 120
 
             if tar > rst:
                 tar = rst
@@ -279,7 +282,6 @@ def sample(sess, model, input_photos, init_cursor, image_size, init_len, seq_len
                 now_round_cursor_list = copy.deepcopy(round_cursor_list)
                 now_round_length_real_list = copy.deepcopy(round_length_real_list)
                 now_round_length_real_list.append(i)
-
 
             if not state_dependent and i % init_len == 0:
                 prev_state = initial_state
@@ -302,13 +304,10 @@ def sample(sess, model, input_photos, init_cursor, image_size, init_len, seq_len
 
             o_other_params_list, o_pen_list, o_pred_params_list, next_state_list = \
                 sess.run([model.other_params, model.pen_ras, model.pred_params, model.final_state], feed_dict=feed)
-    # o_other_params: (N, 6), o_pen: (N, 2), pred_params: (N, 1, 7), next_state: (N, 1024)
-    # o_other_params: [tanh*2, sigmoid*2, tanh*2, sigmoid*2]
-
-
+            # o_other_params: (N, 6), o_pen: (N, 2), pred_params: (N, 1, 7), next_state: (N, 1024)
+            # o_other_params: [tanh*2, sigmoid*2, tanh*2, sigmoid*2]
 
             idx_eos_list = np.argmax(o_pen_list, axis=1)  # (N)
-
 
             output_i = 0
             idx_eos = idx_eos_list[output_i]
@@ -336,12 +335,12 @@ def sample(sess, model, input_photos, init_cursor, image_size, init_len, seq_len
                 f = o_other_params_proc + [1.0, 1.0]
                 pred_stroke_img = draw(f)  # (raster_size, raster_size), [0.0-stroke, 1.0-BG]
                 pred_stroke_img_large = image_pasting_v3_testing(1.0 - pred_stroke_img, cursor_pos[output_i, 0],
-                                                                  image_size,
-                                                                  curr_window_size[output_i],
-                                                                  pasting_func, sess)  # [0.0-BG, 1.0-stroke]
-                prev_canvas=curr_canvas[output_i]
+                                                                 image_size,
+                                                                 curr_window_size[output_i],
+                                                                 pasting_func, sess)  # [0.0-BG, 1.0-stroke]
+                prev_canvas = curr_canvas[output_i]
                 curr_canvas[output_i] += pred_stroke_img_large  # [0.0-BG, 1.0-stroke]
-                sum1=np.sum(pred_stroke_img_large)
+                sum1 = np.sum(pred_stroke_img_large)
 
                 continuous_one_state_num = 0
                 curr_canvas = np.clip(curr_canvas, 0.0, 1.0)
@@ -365,11 +364,13 @@ def sample(sess, model, input_photos, init_cursor, image_size, init_len, seq_len
             prev_scaling = next_scaling  # (N)
             prev_window_size = curr_window_size
 
-            new_cursor_offsets = o_other_params_list[:, 2:4] * (np.expand_dims(curr_window_size, axis=-1) / 2.0)  # (N, 2), patch-level
+            new_cursor_offsets = o_other_params_list[:, 2:4] * (
+                        np.expand_dims(curr_window_size, axis=-1) / 2.0)  # (N, 2), patch-level
             new_cursor_offset_next = new_cursor_offsets
 
             # important!!!
-            new_cursor_offset_next = np.concatenate([new_cursor_offset_next[:, 1:2], new_cursor_offset_next[:, 0:1]], axis=-1)
+            new_cursor_offset_next = np.concatenate([new_cursor_offset_next[:, 1:2], new_cursor_offset_next[:, 0:1]],
+                                                    axis=-1)
 
             cursor_pos_large = cursor_pos * float(image_size)
 
@@ -379,26 +380,24 @@ def sample(sess, model, input_photos, init_cursor, image_size, init_len, seq_len
                 cursor_pos_large = stroke_position_next  # (N, 2), large-level
             else:
                 raise Exception('Unknown cursor_type')
-            #print(cursor_pos_large)
+            # print(cursor_pos_large)
 
-            cursor_pos_large = np.minimum(np.maximum(cursor_pos_large, 0.0), float(image_size - 1))  # (N, 2), large-level
+            cursor_pos_large = np.minimum(np.maximum(cursor_pos_large, 0.0),
+                                          float(image_size - 1))  # (N, 2), large-level
             cursor_pos_large = np.expand_dims(cursor_pos_large, axis=1)  # (N, 1, 2)
             cursor_pos = cursor_pos_large / float(image_size)
-            #print(cursor_pos_large)
+            # print(cursor_pos_large)
 
-
-            #print(flag1,flag2)
-            #if idx_eos == 0 :
-                #cursor_pos=np.array([[[flag1/image_size,flag2/image_size]]])
-            cursor_list.append(cursor_pos*image_size)
-            #print(cursor_pos)
-
+            # print(flag1,flag2)
+            # if idx_eos == 0 :
+            # cursor_pos=np.array([[[flag1/image_size,flag2/image_size]]])
+            cursor_list.append(cursor_pos * image_size)
+            # print(cursor_pos)
 
             if continuous_one_state_num >= round_stop_state_num or i == seq_len - 1:
                 round_length_real_list.append(i + 1)
 
                 break
-
 
     return now_params_list, now_state_raw_list, now_state_soft_list, curr_canvas, now_window_size_list, \
            now_round_cursor_list, now_round_length_real_list
@@ -417,19 +416,16 @@ def main_testing(test_image_base_dir, test_dataset, test_image_name,
     [test_set, eval_hps_model, sample_hps_model] \
         = load_dataset_testing(test_image_base_dir, test_dataset, test_image_name, model_params)
 
-    file_names=test_image_name
+    file_names = test_image_name
 
     file_names = os.path.split(file_names)[1]
-
 
     test_image_raw_name = file_names[:file_names.find('.')]
     model_dir = os.path.join(model_base_dir, model_name)
 
-
     reset_graph()
 
     sampling_model = VirtualSketchingModel(sample_hps_model)
-
 
     # differentiable pasting graph
     paste_v3_func = DiffPastingV3(sample_hps_model['raster_size'])
@@ -465,11 +461,10 @@ def main_testing(test_image_base_dir, test_dataset, test_image_name,
 
         input_photos = input_photos[0:1, :, :]
 
-
         ori_img = (input_photos.copy()[0] * 255.0).astype(np.uint8)
         ori_img = np.stack([ori_img for _ in range(3)], axis=2)
         ori_img_png = Image.fromarray(ori_img, 'RGB')
-        #ori_img_png.save(os.path.join(sampling_dir, test_image_raw_name + '_input.png'), 'PNG')
+        # ori_img_png.save(os.path.join(sampling_dir, test_image_raw_name + '_input.png'), 'PNG')
 
         data_loading_time_point = time.time()
 
@@ -479,7 +474,7 @@ def main_testing(test_image_base_dir, test_dataset, test_image_name,
             sess, sampling_model, input_photos, init_cursors, test_image_size,
             eval_hps_model['max_seq_len'], longer_infer_lens, state_dependent,
             paste_v3_func, round_stop_state_num, stroke_acc_threshold)
-        cv.imwrite('1a2b3c.png',255-pred_imgs_out[0]*255)
+        cv.imwrite('1a2b3c.png', 255 - pred_imgs_out[0] * 255)
         # pred_imgs_out: [0.0-BG, 1.0-stroke]
 
         print('## round_lengths:', len(round_new_lengths), ':', round_new_lengths)
@@ -504,10 +499,9 @@ def main_testing(test_image_base_dir, test_dataset, test_image_name,
         for c_i in range(len(round_new_cursors)):
             best_cursor = round_new_cursors[c_i][best_result_idx, 0]  # (2)
             multi_cursors.append(best_cursor)
-        #print(len(round_new_lengths))
-        #print(len(multi_cursors))
+        # print(len(round_new_lengths))
+        # print(len(multi_cursors))
         assert len(multi_cursors) == len(round_new_lengths)
-
 
         print('strokes_raw_out', strokes_raw_out.shape)
         stroke_number_list.append(strokes_raw_out.shape[0])
@@ -530,14 +524,14 @@ def main_testing(test_image_base_dir, test_dataset, test_image_name,
         print('Saving results ...')
         if sampling_i != 0:
             save_seq_data(sampling_dir, test_image_raw_name + '_' + str(sampling_i),
-                      strokes_raw_out, multi_cursors,
-                      test_image_size, round_new_lengths, eval_hps_model['min_width'])
+                          strokes_raw_out, multi_cursors,
+                          test_image_size, round_new_lengths, eval_hps_model['min_width'])
         else:
             save_seq_data(sampling_dir, test_image_raw_name,
                           strokes_raw_out, multi_cursors,
                           test_image_size, round_new_lengths, eval_hps_model['min_width'])
 
-        draw_strokes(strokes_raw_out, sampling_dir, test_image_raw_name  + '.png',
+        draw_strokes(strokes_raw_out, sampling_dir, test_image_raw_name + '.png',
                      ori_img, test_image_size,
                      multi_cursors, round_new_lengths, eval_hps_model['min_width'], eval_hps_model['cursor_type'],
                      sample_hps_model['raster_size'], sample_hps_model['min_window_size'],
@@ -558,7 +552,6 @@ def main(model_name, test_image_name, sampling_num):
     test_image_base_dir = 'sample_inputs'
     test_dataset = ''
     test_image_base_dir = ''
-
 
     sampling_base_dir = 'outputs/sampling'
     model_base_dir = 'outputs/snapshot'
