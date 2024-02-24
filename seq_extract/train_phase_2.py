@@ -299,36 +299,13 @@ def trainer(model_params):
     tfconfig.gpu_options.allow_growth = True
     sess = tf.compat.v1.InteractiveSession(config=tfconfig)
     sess.run(tf.compat.v1.global_variables_initializer())
-    '''
+
     model_base_dir = 'outputs/snapshot'
-    model_name = 'pretrain_clean_line_drawings'
+    model_name = 'new_train_phase_1'
     model_dir = os.path.join(model_base_dir, model_name)
-    load_var = load_checkpoint(sess, model_dir)
-    ckpt = tf.train.get_checkpoint_state(model_dir)
-    model_checkpoint_path = ckpt.model_checkpoint_path
-    print('model_dir', model_checkpoint_path)
-    variables = tf.train.list_variables(model_checkpoint_path)
-    replacement_list = [("weights", "kernel"), ("biases", "bias")]
-    for var in variables:
-        print(var)
-    for var_name, var_shape in variables:
-        var_value = tf.train.load_variable(model_checkpoint_path, var_name)
-        for old, new in replacement_list:
-            var_name = var_name.replace(old, new)
-        var_name += ":0"
-        tensor_var = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES, scope=var_name)[0]
-        tensor_var = [var for var in tf.compat.v1.global_variables() if var.op.name == var_name][0]
-        target_variable = None
-        for var in tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES):
-            if var_name in var.name:
-                target_variable = var
-                break
-        assign_op = tf.compat.v1.assign(tensor_var, var_value)
-        sess.run(assign_op)
-    print('Loading model %s' % model_checkpoint_path)
-    snapshot_step = model_checkpoint_path[model_checkpoint_path.rfind('-') + 1:]
+    snapshot_step = load_checkpoint(sess, model_dir)
     print('snapshot_step', snapshot_step)
-    '''
+
     load_checkpoint(sess, FLAGS.neural_renderer_path, ras_only=True)
     if train_model_params['raster_loss_base_type'] == 'perceptual':
         load_checkpoint(sess, FLAGS.perceptual_model_root, perceptual_only=True)
