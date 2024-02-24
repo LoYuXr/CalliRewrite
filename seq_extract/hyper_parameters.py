@@ -157,7 +157,7 @@ def get_default_hparams_phase_2():
         gpus=[0],
         loop_per_gpu=1,
 
-        sn_loss_type='increasing',  # ['decreasing', 'fixed', 'increasing']
+        sn_loss_type='fixed',  # ['decreasing', 'fixed', 'increasing']
         stroke_num_loss_weight=0.5,
         stroke_num_loss_weight_end=0.0,
         increase_start_steps=0,
