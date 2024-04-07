@@ -12,7 +12,7 @@
 </div>
 </h2>
 
-This is the repository of [**CalliRewrite: Recovering Handwriting Behaviors from Calligraphy Images without Supervision**](TODO-PAPER-ARXIV-LINK).
+This is the repository of [**CalliRewrite: Recovering Handwriting Behaviors from Calligraphy Images without Supervision**](http://igcl.pku.edu.cn/papers/24/ICRA2024_CalliRewrite_LYX.pdf).
 
 CalliRewrite is an unsupervised approach enabling low-cost robotic arms to replicate diverse calligraphic 
 glyphs by manipulating different writing tools. We use fine-tuned unsupervised LSTM to perform coarse stroke segmentation, and refine them through a reinforcement learning method to produce 
