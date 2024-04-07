@@ -6,7 +6,7 @@
 
 <div align="center">
     <a href="http://igcl.pku.edu.cn/papers/24/ICRA2024_CalliRewrite_LYX.pdf" target="_blank">
-    <img src="http://igcl.pku.edu.cn/papers/24/ICRA2024_CalliRewrite_LYX.pdf" alt="Paper arXiv"></a>
+    <img src="https://img.shields.io/badge/Page-CalliRewrite-green" alt="Paper arXiv"></a>
     <a href="https://luoprojectpage.github.io/callirewrite/" target="_blank">
     <img src="https://img.shields.io/badge/Page-CalliRewrite-blue" alt="Project Page"/></a>
 </div>
@@ -25,6 +25,7 @@ For more information, please visit our [**project page**](https://luoprojectpage
 
 ## 📬 News
 
+- **2024.4.6** CalliRewrite has been selected as a finalist for the IEEE ICRA Best Paper Award in Service Robotics
 - **2024.2.27** Version 1.0 upload
 
 ## How to Use Our Code and Model:
