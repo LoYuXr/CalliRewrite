@@ -5,7 +5,7 @@
 
 
 <div align="center">
-    <a href="TODO-PAPER-ARXIV-LINK" target="_blank">
+    <a href="http://igcl.pku.edu.cn/papers/24/ICRA2024_CalliRewrite_LYX.pdf" target="_blank">
     <img src="https://img.shields.io/badge/Paper-arXiv-green" alt="Paper arXiv"></a>
     <a href="https://luoprojectpage.github.io/callirewrite/" target="_blank">
     <img src="https://img.shields.io/badge/Page-CalliRewrite-blue" alt="Project Page"/></a>
