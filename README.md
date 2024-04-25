@@ -24,12 +24,14 @@ For more information, please visit our [**project page**](https://luoprojectpage
 
 
 ## 📬 News
-
+- **2024.4.25** Coarse Sequence Extraction checjpoints released.
 - **2024.4.6** CalliRewrite has been selected as a finalist for the IEEE ICRA Best Paper Award in Service Robotics
 - **2024.2.27** Version 1.0 upload
 
 ## How to Use Our Code and Model:
-We release our network and checkpoints. You can setup the pipeline under the following guidance.
+We are releasing our network and checkpoints. The weights for the coarse sequence module are stored in [**this repository**](https://drive.google.com/file/d/1PUghb8WizEOYHYIAdBluwQMbTeRlBqF1/view?usp=sharing). You can download and place them in the folder ./outputs/snapshot/new_train_phase_1 and ./outputs/snapshot/new_train_phase_2. The parameters of the SAC model are learned based on the provided textual images; therefore, they vary depending on the different tools and input texts."
+
+You can setup the pipeline under the following guidance.
 
 ### 0. Install dependencies
 Due to package version dependencies, we need to set up two separate environments for coarse sequence extraction and tool-aware finetuning. To do this, you can follow these steps:
