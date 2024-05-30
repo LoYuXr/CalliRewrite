@@ -5,10 +5,12 @@
 
 
 <div align="center">
-    <a href="http://igcl.pku.edu.cn/papers/24/ICRA2024_CalliRewrite_LYX.pdf" target="_blank">
-    <img src="https://img.shields.io/badge/Paper-ArXiv-green" alt="Paper arXiv"></a>
+    <a href="https://arxiv.org/abs/2405.15776" target="_blank">
+    <img src="https://img.shields.io/badge/Paper-ArXiv-red" alt="Paper arXiv"></a>
     <a href="https://luoprojectpage.github.io/callirewrite/" target="_blank">
     <img src="https://img.shields.io/badge/Page-CalliRewrite-blue" alt="Project Page"/></a>
+    <a href="http://igcl.pku.edu.cn/papers/24/ICRA2024_CalliRewrite_LYX.pdf" target="_blank">
+    <img src="https://img.shields.io/badge/Paper-ArXiv-green" alt="Lab Link"></a>
 </div>
 </h2>
 
