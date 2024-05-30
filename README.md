@@ -120,3 +120,11 @@ Then you can have an easy startup:
 
 
 ## Citation
+```
+@article{luo2024callirewrite,
+  title={CalliRewrite: Recovering Handwriting Behaviors from Calligraphy Images without Supervision},
+  author={Luo, Yuxuan and Wu, Zekun and Lian, Zhouhui},
+  journal={arXiv preprint arXiv:2405.15776},
+  year={2024}
+}
+```
