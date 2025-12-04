@@ -1,7 +1,7 @@
 import gymnasium as gym
 import Callienv.envs.tools as tools
 
-from gymnasium.wrappers.record_video import RecordVideo  ##
+# from gymnasium.wrappers.record_video import RecordVideo  ##
 
 import torch
 import time
@@ -72,7 +72,7 @@ def parse_args():
     parser.add_argument('--test_data_dir',  default=None, type=str)
 
     # save dirs
-    parser.add_argument('--save_video_dir', default='./result/demo/', type=str)
+    # parser.add_argument('--save_video_dir', default='./result/demo/', type=str)
     parser.add_argument('--save_model_dir', default='./result/models/demo/', type=str)
     parser.add_argument('--save_control_dir', default='./result/demo/arrays/', type=str)
     parser.add_argument('--test_save_dir', default='./result/demo/test/', type=str)
@@ -110,8 +110,8 @@ def parse_args():
 args = parse_args()
 # make dirs
 
-if not os.path.exists(args.save_video_dir):
-    os.makedirs(args.save_video_dir)
+# if not os.path.exists(args.save_video_dir):
+#     os.makedirs(args.save_video_dir)
 if not os.path.exists(args.save_model_dir):
     os.makedirs(args.save_model_dir)
 if not os.path.exists(args.save_control_dir):
@@ -123,7 +123,7 @@ if not os.path.exists(args.test_save_dir):
     
 now = int(round(time.time()*1000))
 now = time.strftime('%Y-%m-%d-%H:%M:%S',time.localtime(now/1000))
-save_video_dir = args.save_video_dir+now+'/'
+# save_video_dir = args.save_video_dir+now+'/'
 save_model_dir = args.save_model_dir+now+'.pth'
 
 ## load tool property: json file
@@ -149,20 +149,28 @@ elif args.which_tool == 'marker':
                                 tp["theta_min"], tp["theta_max"],
                                 tp["theta_step"])
 
+# 这里用的是npy数据型，也就是一个裸露的numpy数据 npz数据是一个压缩数组
+# 这里返回的是匹配的数量
 train_img_num = utils.count_file_num(args.train_data_dir)
 test_img_num = utils.count_file_num(args.test_data_dir)
 
+# CalliEnv-v0 这是自定义环境名称
 env = gym.make('CalliEnv-v0',tool = tool,
+                # 这是训练数据
                 folder_path = args.train_data_dir,
+                # 表示只跑单环境
                 env_num = 1,
+                # 随机挑选一张作为训练集
                 env_rank=(0,train_img_num),
                 render_mode = args.train_render_mode,
                 output_path = args.save_control_dir,
                 visualize_path = None,
+                # 返回的是5元组而不是4元组
+                # new_step_api = True  # 移除：Gymnasium 0.29.0默认使用新API
                 )
 
 print("make train envs...")
-train_envs = SubprocVectorEnv([lambda i=i: RecordVideo(
+train_envs = SubprocVectorEnv([lambda i=i: 
     gym.make('CalliEnv-v0',
              tool=tool,
              folder_path=args.train_data_dir,
@@ -176,13 +184,30 @@ train_envs = SubprocVectorEnv([lambda i=i: RecordVideo(
              update=args.update,
              ema_gamma=0.9,
              seed=args.seed + i  
-             ),
-    video_folder=save_video_dir,
-    name_prefix='trainvids_' + str(i)
-) for i in range(args.train_env_num)])
+             ) for i in range(args.train_env_num)])
+# SubprocVectorEnv 同时启动多个子进程
+# 在 gym.make() 中为每个环境设置独立种子
+# train_envs = SubprocVectorEnv([lambda i=i: RecordVideo(
+#     gym.make('CalliEnv-v0',
+#              tool=tool,
+#              folder_path=args.train_data_dir,
+#              output_path=args.save_control_dir,
+#              visualize_path=args.save_visualize_dir,
+#              env_num=args.train_env_num,
+#              env_rank=(int(train_img_num / args.train_env_num * i), train_img_num),
+#              render_mode=args.train_render_mode,
+#              image_iter=args.image_iter,
+#              start_update=args.start_update,
+#              update=args.update,
+#              ema_gamma=0.9,
+#              seed=args.seed + i  
+#              ),
+#     video_folder=save_video_dir,
+#     name_prefix='trainvids_' + str(i)
+# ) for i in range(args.train_env_num)])
 
 print("make test envs...")
-test_envs = DummyVectorEnv([lambda i=i: RecordVideo(
+test_envs = DummyVectorEnv([lambda i=i: 
     gym.make('CalliEnv-v0',
              tool=tool,
              folder_path=args.test_data_dir,
@@ -196,10 +221,25 @@ test_envs = DummyVectorEnv([lambda i=i: RecordVideo(
              update=args.update,
              ema_gamma=0.9,
              seed=args.seed + 1000 + i 
-             ),
-    video_folder=save_video_dir,
-    name_prefix='testvids_' + str(i)
-) for i in range(args.test_env_num)])
+             ) for i in range(args.test_env_num)])
+# test_envs = DummyVectorEnv([lambda i=i: RecordVideo(
+#     gym.make('CalliEnv-v0',
+#              tool=tool,
+#              folder_path=args.test_data_dir,
+#              output_path=args.test_save_dir,
+#              visualize_path=None,
+#              env_num=args.test_env_num,
+#              env_rank=(int(test_img_num / args.test_env_num * i), test_img_num),
+#              render_mode=args.test_render_mode,
+#              image_iter=args.image_iter,
+#              start_update=args.start_update,
+#              update=args.update,
+#              ema_gamma=0.9,
+#              seed=args.seed + 1000 + i 
+#              ),
+#     video_folder=save_video_dir,
+#     name_prefix='testvids_' + str(i)
+# ) for i in range(args.test_env_num)])
 
 # 设置全局随机种子
 random.seed(args.seed)

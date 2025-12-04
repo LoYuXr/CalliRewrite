@@ -1,4 +1,4 @@
-name: calli_rl2
+name: calli_rl
 channels:
   - pytorch
   - nvidia
