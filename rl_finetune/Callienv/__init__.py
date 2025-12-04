@@ -1,6 +1,6 @@
-from gym.envs.registration import register
+import gymnasium as gym
 
-register(
+gym.register(
 		id='CalliEnv-v0',
 		entry_point='Callienv.envs:CalliEnv',
 )

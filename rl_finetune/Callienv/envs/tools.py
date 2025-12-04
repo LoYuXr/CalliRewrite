@@ -2,7 +2,7 @@ import numpy as np
 import math
 import cv2
 from skimage.draw import polygon, disk, ellipse
-from gym.error import DependencyNotInstalled
+from gymnasium.error import DependencyNotInstalled
 try:
     import pygame
     from pygame import gfxdraw
@@ -16,6 +16,7 @@ class Tool_Base():
     This is a class to define the tool we use, the geometric properties the tool enjoys, 
     the plotting functions on the canvas and the downsampled_canvas, and the dynamics
     '''
+    # 定义工具的几何属性
     def __init__(self, r_min, r_max, l_min, l_max, theta_min, theta_max, theta_step):
   
         self.r_min = r_min
@@ -26,22 +27,28 @@ class Tool_Base():
         self.theta_max = theta_max  #360 degrees
         self.theta_step = theta_step
 
-    
+    # 根据当前状态计算工具的关键几何点
     def calc_four_points(self, v_1, cur_r, cur_l, rad):
+        # 这个方法我不实现，但所有继承我的子类都必须实现它，否则调用就会报错
         raise NotImplementedError
      
+    # 根据环境（如轮廓距离）计算工具的半径和长度
     def geometric_r_l(self, contours, center, canvas_width):
         raise NotImplementedError
-    
+
+    # 在画布上生成工具的像素坐标（用于绘制痕迹）
     def draw_canvas(self, canvas_width, four_points, current_r):
         raise NotImplementedError
-   
+    
+    # 根据动作和环境更新工具的状态（半径、长度、角度）
     def dynamics(self, state, action, center, next_vec_x, next_vec_y, contours, canvas_width):
         raise NotImplementedError
     
+    # 重置状态
     def reset(self, deg, center, canvas_width, contours):
         raise NotImplementedError
     
+    # 用 Pygame 绘制工具形状（用于可视化）
     def visualize_tool(self, display_point_arr, radii):
         raise NotImplementedError
     
@@ -50,9 +57,11 @@ class Writing_Brush(Tool_Base):
     def __init__(self, r_min, r_max, l_min, l_max, theta_min, theta_max, theta_step):
         super().__init__( r_min, r_max, l_min, l_max, theta_min, theta_max, theta_step)
         self.action_space = 2
-        
+
+    # 根据笔杆中部中心点，笔头半径，长度，当前朝向，算出毛笔“三角形笔头”的四个关键点坐标    
     def calc_four_points(self, v_1, cur_r, cur_l, rad):
         ## tip point
+        # 这是将原本坐标系顺时针旋转90度，比如说现在rad=0，也就是笔头是朝下的，我们此时的坐标就是（0，1）
         vec_tip = np.array([-math.sin(rad), math.cos(rad)])
         v_2 = v_1 + cur_l * vec_tip
 

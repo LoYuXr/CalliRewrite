@@ -3,58 +3,13 @@ import math
 from typing import Optional
 import cv2
 import numpy as np
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 
-from gym.envs.classic_control import utils
-from gym.error import DependencyNotInstalled
-from gym.utils import seeding
-from gym.utils.renderer import Renderer
-
+from gymnasium.envs.classic_control import utils
+from gymnasium.error import DependencyNotInstalled
 
 import  Callienv.envs.skel_utils as skel_utils
-'''
-state: [period, r, l, theta, curvature, r_prime, vec_x, vec_y]
-
-        period: [0,1]
-            current position / one stroke length  
-            [notice the length of skelecton list includes multiple strokes, here the period is stroke-based]
-
-        r, l, theta: [0,1]
-            geometric properties.
-            eg: Droplet brush model: r indicates radius of the circle, l indicates vrush tip length. Theta indicates the rotation angle.
-                Ellipse shape brush: r indicates semi-major axis and l indicates semi-minor axis.  Theta indicates the rotation angle.
-                Chisel Tip Marker:   r indicates semi-length, and l indicates semi-width(quadrangle shape!). Theta indicates the rotation angle.
-
-        curvature: [0,1]
-            current curvature (calculated by sin() function)
-        
-        r_prime: [0,1]
-            The distance from the original point to the point after moving in the previous step.  (may change to vectorizes further)
-        
-        vec_x, vec_y: [0,1]
-            Future direction for the current stroke.
-            Specifically, we compute the unit vector between the future point (x_prime, y_prime) and the current point (x,y).
-            x_prime - x, y_prime - y
-        
-        total: 8
-
-action: [r_prime, theta_prime]
-
-        r_prime: [-1,1] (multiply r_prime_bound)
-            in renderer, it will multiply a max_dist
-            We move the original point with this distance by a polar distance.
-            
-        theta_prime: [-1,1] (multiply pi)
-            We move the original point with this angle by a polar distance.
-
-        total: 2
-
-reward: 
-        in step function we'll calculate new aoto-fit r_new,l_new,theta_new and so on
-
-        -2* math.abs(r_prime_new)*curvature / 0.4* cos_sim of theta and new_theta + 0.6
-'''
 
 class CalliEnv(gym.Env):
     metadata = {
@@ -63,7 +18,7 @@ class CalliEnv(gym.Env):
     }
 
     def __init__(self, tool, folder_path: str, output_path: str, visualize_path: str, env_num: int, env_rank:tuple, render_mode: Optional[str] = None, graph_width = 256,\
-                 screen_width = 512, canvas_width = 300, image_iter = 20, start_update = 5, update = 5, ema_gamma = 0.95): # 40 10 5
+                 screen_width = 512, canvas_width = 300, image_iter = 20, start_update = 5, update = 5, ema_gamma = 0.95, seed=None): # 40 10 5
         '''
         # modify canvas width!
         tool : class defined in tool.py
@@ -112,7 +67,7 @@ class CalliEnv(gym.Env):
         self.data_pool = [] # list of tuple
         ## renderer setting
         self.render_mode = render_mode
-        self.renderer = Renderer(self.render_mode, self._render)
+        
         self.graph_width = graph_width
         self.screen_width = screen_width
         self.canvas_width = canvas_width
@@ -165,7 +120,7 @@ class CalliEnv(gym.Env):
             if pt=1 after a step() call, it means a new scale (1/pt_indices[i+1]) should be adopted.
         '''
         img_path, skel_path = pick_data
-        self.img_path = img_path       #renderer
+        self.img_path = img_path       
         self.stroke_img = cv2.imread(self.img_path, 0)
         
         if self.stroke_img.shape != (self.graph_width, self.graph_width):
@@ -318,24 +273,15 @@ class CalliEnv(gym.Env):
         #return self.state, reward, terminated, {}
         # shimmy tianshou/env/venvs.py/patch_env_generator/patched need to be modified!!
         return self.state, reward, terminated, done, {}
-    
-    def seed(self, seed):
-        if seed is not None:
-            self._np_random, seed = seeding.np_random(seed)
 
     def reset(self,
         *,
         seed: Optional[int] = None,
         return_info: bool = False,
         options: Optional[dict] = None):
-        ''' 
-        self.i is a variable that indicates which stroke is currently being drawn in a character.
-        NOTICE: In order to adapt to the Tianshou architecture, we maintain a list in the environment
-                that stores a binary tuple of images and coarse stroke arrays. 
-                For each element in the list, we set a repetition count and iterate through the list.
-        '''
+        super().reset(seed=seed, options=options)
         if seed is not None:
-            self._np_random, seed = seeding.np_random(seed)
+            self._np_random = np.random.RandomState(seed)
         
         self.screen = None
         self.skel_list_cnter = 0
@@ -393,10 +339,7 @@ class CalliEnv(gym.Env):
         好处就是,train以后可以不保存vids也不可视化,只需要不调整fps就好
         '''
         
-        if not return_info:
-            return self.state
-        else:
-            return self.state, {}
+        return self.state, {}
     def calc_reward(self, next_r_prime, last_r, terminated):
         '''
         IN_STEP:
@@ -442,15 +385,14 @@ class CalliEnv(gym.Env):
 
         return reward
 
-    def render(self, mode="human"):
+    def render(self):  # 移除 mode 参数，Gymnasium 0.29.0 使用 self.render_mode
         if self.render_mode is not None:
-            self.renderer.reset()
-            self.renderer.render_step()
-            return self.renderer.get_renders()
-        ##record_video是wrapper, video_recorder里面写到，取的是这个frames的[-1]， 因此只需要返回一帧就好了
-        
+            # self.renderer.reset()
+            # self.renderer.render_step()
+            # return self.renderer.get_renders()
+            return self._render(self.render_mode)  # 直接调用你的渲染逻辑
         else:
-            return self._render(mode)
+            return self._render("human")  # 或使用 return None (推荐)
 
     def init_window(self):
         try:

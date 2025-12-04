@@ -68,8 +68,6 @@ Due to package version dependencies, we need to set up two separate environments
    conda activate callli_rl
    ```
    
-7. Follow **modify_env.md** and correct some flaws in the packages (Necessary!):
-   
 
 By following these steps, you will have two separate conda environments configured for coarse sequence extraction and sequence fine-tuning, ensuring that the correct dependencies are installed for each task.
 
@@ -117,6 +115,18 @@ Then you can have an easy startup:
    ```
 
 ### 5. Visualization and robotic demonstration
+
+### 6. Branch-Specific Notes (Differences from Main)
+
+This branch includes the following modifications compared to the main repository:
+
+1. **Dependency Updates**: Removed the `gym` library and updated `gymnasium` and `tianshou` to newer versions. Added `moviepy` library for video recording functionality.
+
+2. **No Source Code Modification**: The `tianshou` library source code does not require any modifications in this branch.
+
+3. **Import Statement Updates**: All header files referencing `gym` have been updated to use `gymnasium` instead.
+
+4. **Video Recording**: The default `bash ./scripts/train_brush.sh` execution runs the version without video recording. If sufficient memory is available, you can enable video recording by modifying `try_tianshou.py` and uncommenting the relevant code sections.
 
 
 ## Citation
